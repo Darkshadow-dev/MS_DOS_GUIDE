@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MS-DOS Simulator</title>
+<link rel="icon" type="image/png" href="Website-Guide.png" />
+<style>
+:root {
+  --bg: #1e1e1e;
+  --panel: #000;
+  --accent: #00ff00;
+  --text: #c7c7c7;
+  --max-width: 1000px;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: "Courier New", monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* HEADER */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: var(--panel);
+  padding: 12px 20px;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+}
+.header-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--accent);
+  white-space: nowrap;
+}
+/* NAVBAR - 1 LINE ALWAYS VISIBLE */
+nav {
+  margin-top: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+nav::-webkit-scrollbar { display: none; }
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+nav a {
+  color: var(--accent);
+  text-decoration: none;
+  padding: 8px 10px;
+  border-radius: 4px;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+nav a:hover {
+  background: rgba(0,255,0,0.1);
+}
+/* REMOVE DROPDOWNS COMPLETELY */
+.dropdown { display: none !important; }
+/* RESPONSIVE */
+@media (min-width: 769px) {
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+@media (max-width: 768px) {
+  header {
+    display: block;
+  }
+}
+/* MAIN CONTENT */
+main {
+  flex: 1;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 140px 20px 80px;
+}
+main h2 {
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+main p {
+  margin-bottom: 15px;
+  font-size: 18px;
+  line-height: 1.6;
+}
+/* terminal look */
+.terminal-wrap {
+  background:#050505;
+  border-radius:6px;
+  padding:16px;
+  min-height:60vh;
+  max-height:65vh;
+  overflow:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,0.6);
+  border:1px solid rgba(0,255,0,0.06);
+  color:var(--accent);
+  font-size:15px;
+  line-height:1.35;
+  white-space: pre-wrap;
+}
+.line {
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+/* fixed input bar at bottom (DOS style) */
+.input-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--panel);
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255,255,255,0.03);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.prompt {
+  color: var(--accent);
+  min-width: 140px;
+  user-select: none;
+  font-family: inherit;
+  font-size: 20px;
+}
+.cmdline {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  padding: 6px 8px;
+}
+.btn {
+  background: rgba(0,255,0,0.06);
+  color: var(--accent);
+  border: 1px solid rgba(0,255,0,0.06);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* small screens */
+@media (max-width:600px){
+  .prompt { min-width: 100px; }
+}
+/* Hide default scrollbar */
+::-webkit-scrollbar {
+  display: none;
+}
+nav::-webkit-scrollbar {
+  display: none;
+}
+#closeEditorBtn {
+  background: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
+  padding: 5px 10px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+#landscape-warning {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.warning-box {
+  background: #222;
+  border: 2px solid #555;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 350px;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.warning-box button {
+  margin: 8px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#ok-btn { background: #4caf50; color: white; }
+#why-btn { background: #555; color: white; }
+
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top"><div class="logo">MS-DOS Guide</div></div>
+  <nav>
+    <ul>
+      <li><a href="MS-DOS_main.html#home">Home</a></li>
+      <li><a href="MS-DOS_main.html#az">A-Z Commands</a></li>
+      <li><a href="MS-DOS_main.html#other">Other Commands</a></li>
+      <li><a href="MS-DOS_Simulator.html">Simulator</a></li>
+      <li><a href="MS-DOS_main.html#tips">Tips</a></li>
+      <li><a href="MS-DOS_main.html#setup">Setup</a></li>
+      <li><a href="MS-DOS_main.html#trouble">Troubleshooting</a></li>
+      <li><a href="MS-DOS_main.html#history">History</a></li>
+      <li><a href="MS-DOS_main.html#about">About</a></li>
+    </ul>
+  </nav>
+</header>
+<div id="landscape-warning" style="display:none;">
+  <div class="warning-box">
+    <h3>Landscape Mode Needed</h3>
+    <p id="warning-text">This works best in landscape mode. Turn your phone over!</p>
+    <p id="warning-text">Note: Navigation bar brakes in landscape mode go to potrait mode to use it</p>
+
+    <button id="ok-btn">OK</button>
+    <button id="why-btn">Why?</button>
+  </div>
+</div>
+
+<main>
+  <h2>Interactive MS-DOS Simulator</h2>
+  <p style="color:#9aa; margin-bottom:14px;">Filesystem persisted to <code>localStorage</code>. Type <code>help</code>. Use <code>restart</code> to reset to original.</p>
+
+  <div id="terminal" class="terminal-wrap" tabindex="0" aria-live="polite"></div>
+</main>
+
+<div class="input-bar">
+  <div id="prompt" class="prompt">C:\></div>
+  <input id="cmd" class="cmdline" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+  <button id="enterBtn" class="btn">Enter</button>
+</div>
+
+<div id="editorOverlay">
+  <textarea id="fileEditor" spellcheck="false"></textarea>
+  <button id="closeEditorBtn">Close Editor</button>
+</div>
+
+<script>
+const STORAGE_KEY = "msdos_sim_v2";
+
+const ORIGINAL = {
+  cwd: ["C:\\"],
+  ver: "MS-DOS Simulator v2.0 (Simulated)",
+  memKB: 8192,
+  drives: { "A:": null, "B:": null, "C:": "C:\\" },
+  root: {
+    type: "dir",
+    children: {
+      "AUTOEXEC.BAT": { type: "file", content: "@echo off\nrem Autoexec\n" },
+      "README.TXT": { type: "file", content: "Welcome to the MS-DOS simulator!\nType HELP for commands.\n" },
+      "DOCUMENTS": {
+        type: "dir",
+        children: {
+          "NOTES.TXT": { type: "file", content: "These are your notes.\n" }
+        }
+      },
+      "PROGRAMS": {
+        type: "dir",
+        children: {
+          "EDIT.EXE": { type: "file", content: "Fake editor" },
+          "SCAN.EXE": { type: "file", content: "Fake scanner" },
+          "SYSINFO.EXE": { type: "file", content: "System info program" },
+          "TEXTDOCUMENTS": {
+            type: "dir",
+            children: {
+              "TEXT1.TXT": { type: "file", content: "These are your notes.\n" },
+              "TEXT2.TXT": { type: "file", content: "These are your other notes.\n" },
+              "AFEFYS.TXT": { type: "file", content: "These are your weird notes.\n" }
+            }
+          }
+        }
+      },
+      "GAMES": {
+        type: "dir",
+        children: {
+          "DOOM.TXT": { type: "file", content: "Imagine a game here.\n" }
+        }
+      }
+    }
+  }
+};
+
+function saveFS(fs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(fs));
+}
+
+function loadFS() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    saveFS(ORIGINAL);
+    return JSON.parse(JSON.stringify(ORIGINAL));
+  }
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    saveFS(ORIGINAL);
+    return JSON.parse(JSON.stringify(ORIGINAL));
+  }
+}
+let FS = loadFS();
+
+/* UI refs */
+const terminal = document.getElementById("terminal");
+const input = document.getElementById("cmd");
+const enterBtn = document.getElementById("enterBtn");
+const promptEl = document.getElementById("prompt");
+const editorOverlay = document.getElementById("editorOverlay");
+const fileEditor = document.getElementById("fileEditor");
+const closeEditorBtn = document.getElementById("closeEditorBtn");
+
+let currentEditingFile = null; // {parent, name}
+
+/* Helpers */
+
+function appendLine(text, cls) {
+  const div = document.createElement("div");
+  div.className = "line " + (cls || "");
+  div.textContent = text;
+  terminal.appendChild(div);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function appendLines(arr) {
+  arr.forEach(appendLine);
+}
+
+function updatePrompt() {
+  promptEl.textContent = FS.cwd.join("").replace(/\\$/, "\\") + ">";
+}
+
+/* Normalize path: return array of segments like ["C:\\", "FOLDER\\", ...] uppercase */
+function normalizePath(inputPath) {
+  if (!inputPath) return null;
+  let s = inputPath.trim();
+
+  if (/^[A-Za-z]:\\/.test(s)) {
+    // Absolute path
+    const drive = s.slice(0, 3).toUpperCase();
+    let rest = s.slice(3);
+    if (!rest) return [drive];
+    const parts = rest.split(/\\+/).filter(Boolean).map(p => p.toUpperCase());
+    const result = [drive];
+    for (const part of parts) {
+      if (part === "..") {
+        if (result.length > 1) result.pop();
+      } else if (part !== ".") {
+        result.push(part + "\\");
+      }
+    }
+    return result;
+  } else {
+    // Relative path
+    const parts = s.split(/\\+/).filter(Boolean).map(p => p.toUpperCase());
+    const result = [...FS.cwd];
+    for (const part of parts) {
+      if (part === "..") {
+        if (result.length > 1) result.pop();
+      } else if (part !== ".") {
+        result.push(part + "\\");
+      }
+    }
+    return result;
+  }
+}
+
+/* Get node from path array */
+function pathToNode(pathArr) {
+  if (!pathArr || pathArr.length === 0) return FS.root;
+  let node = FS.root;
+  for (let i = 1; i < pathArr.length; i++) {
+    const seg = pathArr[i].replace(/\\$/, "").toUpperCase();
+    if (!node.children || !node.children[seg]) return null;
+    node = node.children[seg];
+  }
+  return node;
+}
+
+/* Find parent directory and name */
+function findParent(pathArr) {
+  if (!pathArr || pathArr.length <= 1) return { parent: FS.root, name: "C:\\" };
+  let parent = FS.root;
+  for (let i = 1; i < pathArr.length - 1; i++) {
+    const seg = pathArr[i].replace(/\\$/, "").toUpperCase();
+    if (!parent.children || !parent.children[seg]) return { parent: null, name: seg };
+    parent = parent.children[seg];
+  }
+  return { parent, name: pathArr[pathArr.length - 1].replace(/\\$/, "").toUpperCase() };
+}
+
+function listDir(node) {
+  if (!node || node.type !== "dir") return [];
+  return Object.keys(node.children || {}).sort((a, b) => a.localeCompare(b));
+}
+
+/* Open file in editor overlay */
+function openFileEditor(pathArr) {
+  const { parent, name } = findParent(pathArr);
+  if (!parent || !parent.children[name] || parent.children[name].type !== "file") {
+    appendLine("File not found or not a file.");
+    return;
+  }
+  currentEditingFile = { parent, name };
+  fileEditor.value = parent.children[name].content || "";
+  editorOverlay.style.display = "flex";
+  input.disabled = true;
+  input.style.opacity = 0.5;
+  enterBtn.disabled = true;
+  input.value = "";
+  appendLine(`-- Editing ${name} -- Type 'close' to exit editor.`);
+  fileEditor.focus();
+}
+
+/* Close file editor and save */
+function closeFileEditor() {
+  if (!currentEditingFile) return;
+  currentEditingFile.parent.children[currentEditingFile.name].content = fileEditor.value;
+  saveFS(FS);
+  appendLine(`-- Saved ${currentEditingFile.name} and closed editor --`);
+  currentEditingFile = null;
+  editorOverlay.style.display = "none";
+  input.disabled = false;
+  input.style.opacity = 1;
+  enterBtn.disabled = false;
+  input.focus();
+}
+
+/* Commands */
+const COMMANDS = {
+  help() {
+    appendLines([
+      "Supported commands:",
+      " BASIC: help, dir, cd, cls, type, copy, del, move, ren, mkdir, rmdir, attrib",
+      " SYSTEM: chkdsk, format, fdisk, defrag, mem, ver, sys, date, time, tree",
+      " PROGRAMS: edit, scan, sysinfo, games (fake)",
+      " OTHER: restart (reset simulator), open, close (file editor)",
+      "Use: command [arguments]   Example: type README.TXT"
+    ]);
+  },
+
+  open(args) {
+    if (!args[0]) {
+      appendLine("Syntax: open filename.txt");
+      return;
+    }
+    const path = normalizePath(args[0]);
+    openFileEditor(path);
+  },
+
+  close() {
+    if (currentEditingFile) {
+      closeFileEditor();
+    } else {
+      appendLine("Not editing any file.");
+    }
+  },
+
+  cls() {
+    terminal.innerHTML = "";
+  },
+
+  ver() {
+    appendLine(FS.ver);
+  },
+
+  mem() {
+    appendLine(`Conventional Memory (simulated): ${FS.memKB}K available.`);
+  },
+
+  dir(args) {
+    const path = args && args[0] ? normalizePath(args[0]) : FS.cwd;
+    const node = pathToNode(path);
+    if (!node || node.type !== "dir") {
+      appendLine("File not found or not a directory.");
+      return;
+    }
+    appendLine(" Volume in drive C has no label.");
+    appendLine(" Directory of " + path.join("").replace(/\\$/, "\\"));
+    const list = listDir(node);
+    list.forEach(name => {
+      const item = node.children[name];
+      if (item.type === "dir") appendLine(`<DIR>    ${name}`);
+      else appendLine(`${(item.content || "").length} bytes    ${name}`);
+    });
+  },
+
+
+cd(args) {
+
+  // --- Handle "cd.." and "cd .." ---
+  if (!args[0] || args[0].toLowerCase() === ".." || args[0].toLowerCase() === "cd.." || args[0].toLowerCase() === "cd ..") {
+    if (FS.cwd.length > 1) {
+      FS.cwd.pop(); // move up one directory
+      updatePrompt();
+      saveFS(FS);
+    } else {
+      appendLine("Already at root directory.");
+    }
+    return;
+  }
+
+  // --- Normal CD path handling ---
+  const target = normalizePath(args[0]);
+  const node = pathToNode(target);
+  if (!node || node.type !== "dir") {
+    appendLine("The system cannot find the path specified.");
+    return;
+  }
+
+  FS.cwd = target;
+  updatePrompt();
+  saveFS(FS);
+},
+
+
+  mkdir(args) {
+    if (!args[0]) {
+      appendLine("Syntax: mkdir foldername");
+      return;
+    }
+    const targ = normalizePath(args[0]);
+    const { parent, name } = findParent(targ);
+    if (!parent) {
+      appendLine("Cannot create folder here.");
+      return;
+    }
+    const nm = name.toUpperCase();
+    if (parent.children[nm]) {
+      appendLine("A subdirectory or file " + nm + " already exists.");
+      return;
+    }
+    parent.children[nm] = { type: "dir", children: {} };
+    appendLine("Directory created: " + nm);
+    saveFS(FS);
+  },
+
+rmdir(args) {
+  if (!args[0]) {
+    appendLine("Syntax: rmdir foldername");
+    return;
+  }
+  const targ = normalizePath(args[0]);
+  const { parent, name } = findParent(targ);
+  if (!parent || !parent.children[name]) {
+    appendLine("The system cannot find the path specified.");
+    return;
+  }
+  const node = parent.children[name];
+  if (node.type !== "dir") {
+    appendLine("The specified path is not a directory.");
+    return;
+  }
+  if (Object.keys(node.children).length > 0) {
+    appendLine("The directory is not empty.");
+    return;
+  }
+  delete parent.children[name];
+  appendLine("Directory removed: " + name);
+  saveFS(FS);
+},
+
+  type(args) {
+    if (!args[0]) {
+      appendLine("Syntax: type filename");
+      return;
+    }
+    const path = normalizePath(args[0]);
+    const { parent, name } = findParent(path);
+    if (!parent || !parent.children[name]) {
+      appendLine("File not found.");
+      return;
+    }
+    const node = parent.children[name];
+    if (node.type !== "file") {
+      appendLine("Cannot type directory.");
+      return;
+    }
+    appendLine(node.content);
+  },
+
+  copy(args) {
+    if (args.length < 2) {
+      appendLine("Syntax: copy source destination");
+      return;
+    }
+    const srcPath = normalizePath(args[0]);
+    const dstPath = normalizePath(args[1]);
+
+    const { parent: srcParent, name: srcName } = findParent(srcPath);
+    const { parent: dstParent, name: dstName } = findParent(dstPath);
+
+    if (!srcParent || !srcParent.children[srcName]) {
+      appendLine("Source file not found.");
+      return;
+    }
+    const srcNode = srcParent.children[srcName];
+    if (srcNode.type !== "file") {
+      appendLine("Source is not a file.");
+      return;
+    }
+    if (!dstParent) {
+      appendLine("Destination path invalid.");
+      return;
+    }
+
+    // Copy file content
+    dstParent.children[dstName] = {
+      type: "file",
+      content: srcNode.content,
+    };
+    appendLine("File copied.");
+    saveFS(FS);
+  },
+
+  del(args) {
+    if (!args[0]) {
+      appendLine("Syntax: del filename");
+      return;
+    }
+    const path = normalizePath(args[0]);
+    const { parent, name } = findParent(path);
+    if (!parent || !parent.children[name]) {
+      appendLine("File not found.");
+      return;
+    }
+    if (parent.children[name].type !== "file") {
+      appendLine("Cannot delete directory with del. Use rmdir.");
+      return;
+    }
+    delete parent.children[name];
+    appendLine("File deleted: " + name);
+    saveFS(FS);
+  },
+
+  move(args) {
+    if (args.length < 2) {
+      appendLine("Syntax: move source destination");
+      return;
+    }
+    const srcPath = normalizePath(args[0]);
+    const dstPath = normalizePath(args[1]);
+
+    const { parent: srcParent, name: srcName } = findParent(srcPath);
+    const { parent: dstParent, name: dstName } = findParent(dstPath);
+
+    if (!srcParent || !srcParent.children[srcName]) {
+      appendLine("Source not found.");
+      return;
+    }
+    if (!dstParent) {
+      appendLine("Destination path invalid.");
+      return;
+    }
+
+    dstParent.children[dstName] = srcParent.children[srcName];
+    delete srcParent.children[srcName];
+    appendLine("Moved " + srcName + " to " + dstName);
+    saveFS(FS);
+  },
+
+  ren(args) {
+    if (args.length < 2) {
+      appendLine("Syntax: ren oldname newname");
+      return;
+    }
+    const path = normalizePath(args[0]);
+    const { parent, name: oldName } = findParent(path);
+    if (!parent || !parent.children[oldName]) {
+      appendLine("File or directory not found.");
+      return;
+    }
+    const newName = args[1].toUpperCase();
+    if (parent.children[newName]) {
+      appendLine("A file or directory with the new name already exists.");
+      return;
+    }
+    parent.children[newName] = parent.children[oldName];
+    delete parent.children[oldName];
+    appendLine(`Renamed ${oldName} to ${newName}`);
+    saveFS(FS);
+  },
+
+  edit(args) {
+    if (!args[0]) {
+      appendLine("Syntax: edit filename");
+      return;
+    }
+    const path = normalizePath(args[0]);
+    openFileEditor(path);
+  },
+
+  restart() {
+    FS = JSON.parse(JSON.stringify(ORIGINAL));
+    saveFS(FS);
+    appendLine("Simulator reset.");
+    updatePrompt();
+  },
+
+  cls() {
+    terminal.innerHTML = "";
+  }
+};
+
+/* Execute commands */
+function runCommand(line) {
+  if (!line.trim()) return;
+  appendLine(FS.cwd.join("").replace(/\\$/, "\\") + "> " + line);
+  const [cmd, ...args] = line.trim().split(/\s+/);
+  const command = cmd.toLowerCase();
+
+  if (currentEditingFile && command !== "close") {
+    appendLine("You are currently editing a file. Type 'close' to exit editor.");
+    return;
+  }
+
+  if (COMMANDS[command]) {
+    COMMANDS[command](args);
+  } else {
+    appendLine(`'${cmd}' is not recognized as an internal or external command.`);
+  }
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+/* Event listeners */
+enterBtn.addEventListener("click", () => {
+  runCommand(input.value);
+  input.value = "";
+  input.focus();
+});
+
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    runCommand(input.value);
+    input.value = "";
+  } else if (e.key === "Escape" && currentEditingFile) {
+    closeFileEditor();
+  }
+});
+
+closeEditorBtn.addEventListener("click", () => {
+  closeFileEditor();
+});
+
+/* Initialize prompt and focus */
+updatePrompt();
+input.focus();
+
+</script>
+<script>
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
+function checkOrientation() {
+  if (!isMobile()) return; // ignore on PC
+
+  const warning = document.getElementById("landscape-warning");
+
+  if (window.innerWidth < window.innerHeight) {
+    // Portrait mode
+    warning.style.display = "flex";
+    document.getElementById("warning-text").innerText =
+      "This only works in landscape mode. Turn your phone over.";
+  } else {
+    // Landscape mode
+    warning.style.display = "none";
+  }
+}
+
+// Buttons
+document.getElementById("ok-btn").onclick = () => {
+  document.getElementById("landscape-warning").style.display = "none";
+};
+
+document.getElementById("why-btn").onclick = () => {
+  document.getElementById("warning-text").innerText =
+    "The simulator was made for pc but needs landscape mode to work correctly!";
+};
+
+// Check on load and when rotating
+window.addEventListener("load", checkOrientation);
+window.addEventListener("resize", checkOrientation);
+</script>
+
+</body>
+</html>
