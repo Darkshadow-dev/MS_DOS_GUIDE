@@ -13,6 +13,10 @@
   --accent: #00ff00;
   --text: #c7c7c7;
   --max-width: 1000px;
+  --accent: #0f0; /* bright green */
+  --danger: #ff5555; /* red for warnings */
+  --background: #111; /* dark background for contrast */
+  --text-font: monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -133,112 +137,349 @@ p {
 /* Hide scrollbar */
 ::-webkit-scrollbar { display: none; }
 
-/*-----Commands A-Z*/
+/* Typing reaction */
+.cursor-typing {
+  animation: typePulse 0.15s linear;
+}
+
+@keyframes typePulse {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  50%  { transform: translate(-50%, -50%) scale(1.4); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+* {
+  cursor: none;
+}
+
+/* ===== MAIN CURSOR ===== */
+#cursor {
+  position: fixed;
+  width: 8px;
+  height: 12px;
+  border-left: 2px solid #00ff00;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+
+  /* CRT glow */
+  box-shadow:
+    0 0 4px #00ff00,
+    0 0 10px rgba(0,255,0,0.7),
+    0 0 18px rgba(0,255,0,0.35);
+}
+
+/* TEXT CURSOR (I-beam) */
+.cursor-text {
+  width: 2px;
+  height: 12px;
+  background: #00ff00;
+  box-shadow:
+    0 0 4px #00ff00,
+    0 0 10px rgba(0,255,0,0.6);
+}
+
+/* TERMINAL BLOCK */
+.cursor-block {
+  width: 10px;
+  height: 12px;
+  background: #00ff00;
+  animation: blink 1s steps(1) infinite;
+
+  box-shadow:
+    0 0 6px #00ff00,
+    0 0 14px rgba(0,255,0,0.8),
+    0 0 24px rgba(0,255,0,0.4);
+}
+
+/* LINK HOVER */
+.cursor-hover {
+  background: rgba(0,255,0,0.35);
+  outline: 1px solid #00ff00;
+}
+
+/* BLINK */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ===== PHOSPHOR TRAIL ===== */
+.trail {
+  position: fixed;
+width: 8px; height: 8px;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+border-radius: 50%;
+  background: rgba(0,255,0,0.35);
+  animation: fade 0.8s linear forwards;
+}
+
+@keyframes fade {
+  to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+/*----- Commands A-Z -----*/
 .commands-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px;
-  padding: 30px;
+  gap: 24px;
+  padding: 20px;
   justify-content: flex-start;
 }
+
+/* DESKTOP (default): 3 columns */
 .command-section {
-  width: 25%; /* IMPORTANT: fixed width like OG */
-}
-.command-section {
+  width: calc((100% / 3) - 16px); /* 3 columns with gap adjustment */
   background: #000;
   border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 16px;
 }
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .command-section {
+    width: calc(50% - 24px); /* 2 columns */
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .commands-container {
+    padding: 12px;
+    gap: 16px;
+  }
+  .command-section {
+    width: 100%;
+    padding: 14px;
+  }
+}
+@media (pointer: coarse) {
+  #bootScreen {
+    display: none !important;
+  }
+
+  #cursor {
+    display: none !important;
+  }
+
+  body {
+    cursor: auto !important;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  #bootScreen {
+    display: none !important;
+  }
+
+  #cursor {
+    display: none !important;
+  }
+
+  body {
+    cursor: auto !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  #bootScreen {
+    display: none !important;
+  }
+
+  #cursor {
+    display: none !important;
+  }
+
+  body {
+    cursor: auto !important;
+  }
+}
+
+
+/* Headings */
 .command-section h2 {
   margin-bottom: 8px;
-}
-
-.command-section li {
-  line-height: 1.4;
-}
-
-.command-section h2 {
   color: var(--accent);
 }
 
+/* List */
 .command-section ul {
   list-style: none;
   margin-top: 10px;
 }
 
 .command-section li {
-  padding: 4px 0;
-  color: var(--text);
-}
-
-.command-section li:hover {
-  color: var(--accent);
-}
-.commands-container li {
-  position: relative;
-  cursor: default;
-  list-style: none;
   padding: 4px 6px;
+  line-height: 1.4;
   font-family: monospace;
-  color: var(--accent); /* green */
+  color: var(--accent);
+  position: relative;
   user-select: none;
 }
 
-.commands-container li:hover::after {
-  content: attr(data-tooltip);
+/* Tooltip showing description + example on hover */
+.command-section li::after {
+  content:
+    "Description: " attr(data-tooltip)
+    "\A Example: " attr(data-example);
+  white-space: pre-line;
   position: absolute;
-  left: 25%;
+  left: 50%;
   top: 50%;
   transform: translateY(-50%);
   background: #000;
+  border: 1px solid #0f0;
   color: #0f0;
-  padding: 6px 12px;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-size: 14px;
-  box-shadow: 0 0 8px #0f0aa;
-  z-index: 1000;
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.2s ease-in-out;
-  max-width: 320px;
-}
-
-.commands-container li::after {
+  padding: 10px;
+  border-radius: 6px;
+  min-width: 280px;
+  font-size: 13px;
   opacity: 0;
   pointer-events: none;
-}
-.page h1 {
-  margin-top: 0;
-  margin-bottom: 20px;
-}
-
-
-.page {
-  min-height: 100%;
-}
-main {
-  min-height: calc(100vh - 200px);
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+  box-shadow: 0 0 8px #0f0aa;
 }
 
+.command-section li:hover::after,
+.command-section li:focus::after {
+  opacity: 1;
+  pointer-events: auto;
+}
 
-</style>
+.copy {
+  color: #0f0;
+  cursor: pointer;
+  user-select: none;
+  margin-left: 6px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.copy:hover {
+  text-decoration: underline;
+}
+
+.danger {
+  color: #ff5555;
+  font-weight: bold;
+}
+
+/* Desktop only */
+#bootScreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #0f0;
+  font-family: "Courier New", monospace;
+  z-index: 9999;
+  overflow: hidden;
+  padding: 10px;
+  cursor: none;
+}
+
+body {
+  cursor: none;
+}
+
+  #bootText {
+    position: relative;
+    margin: 0;
+    white-space: pre-wrap;
+    line-height: 1.4;
+  }
+
+.cursor {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Tunnel bits */
+.bit {
+  position: absolute;
+  color: #0f0;
+  opacity: 0.9;
+  font-size: 14px;
+  will-change: transform, opacity;
+}
+
+/* Fade to system */
+.fade-out {
+  animation: fadeOut 0.8s forwards;
+}
+  .page {
+    opacity: 0;
+    animation: fadeInPage 0.6s ease forwards;
+  }
+  @keyframes fadeInPage {
+    to {
+      opacity: 1;
+    }
+  }
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+/* FOOTER */
+footer {
+  background: var(--panel);
+  color: white;
+  padding: 1em 2em;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  text-align: center;
+  font-size: 2px;
+}/* Clock icon */#clock {
+  position: fixed;
+  right: 1rem;
+  bottom: 0.7rem;
+  font-size: 20px;
+  cursor: default;
+  user-select: none;
+}/* Tooltip (hidden by default) */
+#clockTooltip {
+  position: absolute;
+  bottom: 160%;
+  right: 0;
+  background: #000;
+  color: #00ff00;
+  border: 1px solid #00ff00;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}/* Show on hover */
+#clock:hover #clockTooltip {
+  opacity: 1;} </style>
 </head>
-
 <body>
-
+  <div id="cursor"></div>
 <header>
   <div class="header-top">
     <div class="logo">MS-DOS Guide</div>
   </div>
-
+<div id="bootScreen">
+  <div id="bootText"></div><span class="cursor">█</span>
+</div>
   <nav>
     <ul>
       <li><a href="#home">Home</a></li>
       <li><a href="#az">A-Z Commands</a></li>
       <li><a href="#other">Other Commands</a></li>
-      <li><a href="MS-DOS_Simulator.html">Simulator</a></li>
+            <li><a href="MS-DOS_Simulator.html">Simulator</a></li>
       <li><a href="#tips">Tips</a></li>
       <li><a href="#setup">Setup</a></li>
       <li><a href="#trouble">Troubleshooting</a></li>
@@ -252,257 +493,381 @@ main {
 
   <section id="home" class="page active">
     <h2>Welcome to the MS-DOS Guide</h2>
-    <p>Your resource for learning and using Microsoft Disk Operating System.</p>
-    <p>Navigate using the menu above — no page reloads.</p>
-  </section>
-
-  <section id="az" class="page">
-<h2>MS-DOS Commands A-Z</h2>
-<div class="commands-container">
-
-  <div class="command-section">
-    <h2>A</h2>
-    <ul>
-      <li data-tooltip="APPEND [drive1:][path1] filename">APPEND</li>
-      <li data-tooltip="ASSIGN [drive1=drive2]">ASSIGN</li>
-      <li data-tooltip="ATTRIB [+R|-R] [+A|-A] [+S|-S] [+H|-H] [filename]">ATTRIB</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>B</h2>
-    <ul>
-      <li data-tooltip="BREAK [ON | OFF]">BREAK</li>
-      <li data-tooltip="BOOTCFG /[COMMANDS]">BOOTCFG</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>C</h2>
-    <ul>
-      <li data-tooltip="CALL [batchfile] [arguments]">CALL</li>
-      <li data-tooltip="CD [directory]">CD</li>
-      <li data-tooltip="CHKDSK [volume]">CHKDSK</li>
-      <li data-tooltip="CLS">CLS</li>
-      <li data-tooltip="COLOR [attr]">COLOR</li>
-      <li data-tooltip="COMP [file1] [file2]">COMP</li>
-      <li data-tooltip="CONVERT [volume] /FS:NTFS">CONVERT</li>
-      <li data-tooltip="COPY source destination">COPY</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>D</h2>
-    <ul>
-      <li data-tooltip="DATE [mm-dd-yy]">DATE</li>
-      <li data-tooltip="DEL filename">DEL</li>
-      <li data-tooltip="DIR [path]">DIR</li>
-      <li data-tooltip="DISKPART">DISKPART</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>E</h2>
-    <ul>
-      <li data-tooltip="ECHO [ON | OFF | message]">ECHO</li>
-      <li data-tooltip="EDIT filename">EDIT</li>
-      <li data-tooltip="EXIT">EXIT</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>F</h2>
-    <ul>
-      <li data-tooltip="FC file1 file2">FC</li>
-      <li data-tooltip="FIND \"string\" filename">FIND</li>
-      <li data-tooltip="FORMAT [drive:]">FORMAT</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>G</h2>
-    <ul>
-      <li data-tooltip="GOTO label">GOTO</li>
-      <li data-tooltip="GPRESULT [options]">GPRESULT</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>H</h2>
-    <ul>
-      <li data-tooltip="HELP [command]">HELP</li>
-      <li data-tooltip="HOSTNAME">HOSTNAME</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>I</h2>
-    <ul>
-      <li data-tooltip="IF condition command">IF</li>
-      <li data-tooltip="IPCONFIG [options]">IPCONFIG</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>K</h2>
-    <ul>
-      <li data-tooltip="KEYB [layout]">KEYB</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>L</h2>
-    <ul>
-      <li data-tooltip="LABEL [drive:] [label]">LABEL</li>
-      <li data-tooltip="LIST">LIST</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>M</h2>
-    <ul>
-      <li data-tooltip="MODE [device] [parameters]">MODE</li>
-      <li data-tooltip="MORE [filename]">MORE</li>
-      <li data-tooltip="MOVE source destination">MOVE</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>N</h2>
-    <ul>
-      <li data-tooltip="NET [commands]">NET</li>
-      <li data-tooltip="NETSTAT">NETSTAT</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>P</h2>
-    <ul>
-      <li data-tooltip="PATH [path]">PATH</li>
-      <li data-tooltip="PAUSE">PAUSE</li>
-      <li data-tooltip="PING [address]">PING</li>
-      <li data-tooltip="PRINT [filename]">PRINT</li>
-      <li data-tooltip="PROMPT [text]">PROMPT</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>R</h2>
-    <ul>
-      <li data-tooltip="RD [directory]">RD</li>
-      <li data-tooltip="REN oldname newname">REN</li>
-      <li data-tooltip="REPLACE source destination">REPLACE</li>
-      <li data-tooltip="ROBOCOPY source destination [options]">ROBOCOPY</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>S</h2>
-    <ul>
-      <li data-tooltip="SET [variable=[string]]">SET</li>
-      <li data-tooltip="SHUTDOWN [options]">SHUTDOWN</li>
-      <li data-tooltip="START [program]">START</li>
-      <li data-tooltip="SUBST [drive1: drive2:]">SUBST</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>T</h2>
-    <ul>
-      <li data-tooltip="TIME [HH:MM[:SS[.xx]]]">TIME</li>
-      <li data-tooltip="TITLE [string]">TITLE</li>
-      <li data-tooltip="TYPE filename">TYPE</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>U</h2>
-    <ul>
-      <li data-tooltip="UNSET variable">UNSET</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>V</h2>
-    <ul>
-      <li data-tooltip="VER">VER</li>
-      <li data-tooltip="VERIFY [ON | OFF]">VERIFY</li>
-      <li data-tooltip="VOL [drive:]">VOL</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>W</h2>
-    <ul>
-      <li data-tooltip="WHERE [filename]">WHERE</li>
-      <li data-tooltip="WHOAMI">WHOAMI</li>
-    </ul>
-  </div>
-
-  <div class="command-section">
-    <h2>X</h2>
-    <ul>
-      <li data-tooltip="XCOPY source destination [options]">XCOPY</li>
-    </ul>
-  </div>
-
-</div>
-  </section>
-
-  <section id="other" class="page">
-  <h2>Other Uses for MS-DOS Commands</h2>
-<p></p>
+  <h2>HOME</h2>
   <p>
-    This section covers advanced and utility-focused uses of MS-DOS commands:
-    installation, upgrading, updating, disk checking, debugging, repairing, and
-    maintaining your system.
+    MS-DOS Guide is a modern, visual reference for the classic Microsoft Disk
+    Operating System. It recreates the DOS learning experience using a fast,
+    single-file website with no page reloads.
+  </p>
+  <p>
+    Navigate commands, explore system behavior, and learn how DOS really works —
+    all in one place.
   </p>
 <p></p>
-  <h3>Installation & Upgrading Commands</h3>
-  <ul>
-    <li><strong>SYS</strong> – Install MS-DOS system files to a disk.</li>
-    <li><strong>FORMAT</strong> – Prepare (and wipe) disks for installation.</li>
-    <li><strong>DISKCOPY</strong> – Clone full disks for installation sets.</li>
-    <li><strong>XCOPY</strong> – Transfer large directories when upgrading systems.</li>
-  </ul>
+  <h2>ABOUT</h2>
+  <p>
+    This guide provides an A–Z command reference with interactive descriptions,
+    syntax hints, and practical usage. Commands are organized for fast lookup and
+    clear understanding.
+  </p>
+  <p>
+    The site is built as a visual single-page system, reusing containers and
+    layouts to stay efficient, lightweight, and true to the DOS philosophy.
+  </p>
 <p></p>
-  <h3>Updating Tools</h3>
-  <ul>
-    <li><strong>REPLACE</strong> – Update files only if the source is newer.</li>
-    <li><strong>COPY /V</strong> – Verify file integrity while copying updates.</li>
-    <li><strong>ATTRIB</strong> – Remove protection for updating locked files.</li>
-  </ul>
+  <h2>SIMULATOR</h2>
+  <p>
+    The MS-DOS Simulator allows you to test commands in a safe environment
+    without modifying your real system.
+  </p>
+  <p>
+    Learn by experimenting. Break nothing. Understand everything.
+  </p>
 <p></p>
-  <h3>Disk Checking & Repair</h3>
-  <ul>
-    <li><strong>CHKDSK</strong> – Scan disks for errors and display status.</li>
-    <li><strong>SCANDISK</strong> (later versions) – Fix corrupted clusters.</li>
-    <li><strong>FDISK</strong> – Inspect and rebuild partitions.</li>
-    <li><strong>DEFRAG</strong> – Improve file layout and system performance.</li>
-  </ul>
+  <h2>MISSION</h2>
+  <p>
+    Preserve command-line knowledge. Teach system fundamentals. Make DOS
+    accessible to everyone — beginners, learners, and enthusiasts.
+  </p>
 <p></p>
-  <h3>Debugging & Diagnostics</h3>
-  <ul>
-    <li><strong>DEBUG</strong> – Low-level memory reading and editing.</li>
-    <li><strong>MEM</strong> – View detailed memory usage.</li>
-    <li><strong>VER</strong> – Check your MS-DOS version.</li>
-    <li><strong>MODE</strong> – Test devices and set system configurations.</li>
-  </ul>
-<p></p>
-  <h3>Maintenance & Cleanup</h3>
-  <ul>
-    <li><strong>DEL /F</strong> – Force delete corrupted or locked files.</li>
-    <li><strong>TREE</strong> – Analyze folder structures.</li>
-    <li><strong>DISKCOMP</strong> – Compare two disks for data integrity.</li>
-    <li><strong>BACKUP / RESTORE</strong> – Save your system and recover it.</li>
-  </ul>
-<p></p>
-  <p>These commands extend MS-DOS beyond simple file navigation and let you maintain, repair, and tune the system like a technician.</p>
+  <h2>CREDITS</h2>
+  <p>
+    MS-DOS Guide © 2025<br>
+    Designed and developed as an educational and archival project.<br>
+    Inspired by classic DOS systems and command-line workflows.
+  </p>
   </section>
 
+<section id="az" class="page">
+  <h2 style="color: var(--accent); font-family: monospace; text-align:center; margin-bottom: 30px;">
+    MS-DOS Commands A-Z
+  </h2>
+    <div class="commands-container">
+    <!-- A -->
+    <div class="command-section">
+      <h2>A</h2>
+      <ul>
+        <li data-tooltip="Adds directories to the search path" data-example="APPEND C:\\DATA">
+          APPEND <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Assigns one drive letter to another" data-example="ASSIGN A=C">
+          ASSIGN <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Changes file attributes" data-example="ATTRIB +H secret.txt">
+          ATTRIB <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- B -->
+    <div class="command-section">
+      <h2>B</h2>
+      <ul>
+        <li data-tooltip="Enables Ctrl+C checking" data-example="BREAK ON">
+          BREAK <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Configures boot options" data-example="BOOTCFG /QUERY">
+          BOOTCFG <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- C -->
+    <div class="command-section">
+      <h2>C</h2>
+      <ul>
+        <li data-tooltip="Changes current directory" data-example="CD C:\\GAMES">
+          CD <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Clears the screen" data-example="CLS">
+          CLS <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Copies files" data-example="COPY file.txt D:\\BACKUP">
+          COPY <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Converts FAT volumes to NTFS" data-example="CONVERT C: /FS:NTFS">
+          CONVERT <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Compares contents of two files" data-example="COMP file1.txt file2.txt">
+          COMP <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Runs a batch file with optional arguments" data-example="CALL backup.bat today">
+          CALL <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- D -->
+    <div class="command-section">
+      <h2>D</h2>
+      <ul>
+        <li data-tooltip="Displays or sets the system date" data-example="DATE">
+          DATE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Deletes one or more files" data-example="DEL old.txt">
+          DEL <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Lists files and directories" data-example="DIR C:\\">
+          DIR <span class="copy">[copy]</span>
+        </li>
+        <li class="danger" data-tooltip="Advanced disk partitioning tool" data-example="DISKPART">
+          DISKPART <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- E -->
+    <div class="command-section">
+      <h2>E</h2>
+      <ul>
+        <li data-tooltip="Displays messages or toggles echo" data-example="ECHO Hello World">
+          ECHO <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Opens the MS-DOS text editor" data-example="EDIT notes.txt">
+          EDIT <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Closes the command prompt" data-example="EXIT">
+          EXIT <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- F -->
+    <div class="command-section">
+      <h2>F</h2>
+      <ul>
+        <li data-tooltip="Compares two files" data-example="FC a.txt b.txt">
+          FC <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Searches for text in files" data-example='FIND "error" log.txt'>
+          FIND <span class="copy">[copy]</span>
+        </li>
+        <li class="danger" data-tooltip="Formats a disk (erases all data)" data-example="FORMAT A:">
+          FORMAT <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- G -->
+    <div class="command-section">
+      <h2>G</h2>
+      <ul>
+        <li data-tooltip="Goes to a labeled line in a batch program" data-example="GOTO start">
+          GOTO <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays Group Policy results" data-example="GPRESULT /R">
+          GPRESULT <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- H -->
+    <div class="command-section">
+      <h2>H</h2>
+      <ul>
+        <li data-tooltip="Provides help information for commands" data-example="HELP DIR">
+          HELP <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays the hostname of the computer" data-example="HOSTNAME">
+          HOSTNAME <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- I -->
+    <div class="command-section">
+      <h2>I</h2>
+      <ul>
+        <li data-tooltip="Performs conditional processing in batch files" data-example="IF EXIST file.txt ECHO Found">
+          IF <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays IP configuration information" data-example="IPCONFIG /ALL">
+          IPCONFIG <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- K -->
+    <div class="command-section">
+      <h2>K</h2>
+      <ul>
+        <li data-tooltip="Sets the keyboard layout" data-example="KEYB US">
+          KEYB <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- L -->
+    <div class="command-section">
+      <h2>L</h2>
+      <ul>
+        <li data-tooltip="Displays or changes the volume label of a disk" data-example="LABEL C: MyDisk">
+          LABEL <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Lists files or folders (less common)" data-example="LIST">
+          LIST <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+    <!-- M -->
+    <div class="command-section">
+      <h2>M</h2>
+      <ul>
+        <li data-tooltip="Configures system devices" data-example="MODE COM1 BAUD=9600">
+          MODE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays output one screen at a time" data-example="MORE readme.txt">
+          MORE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Moves files" data-example="MOVE file.txt D:\\Backup">
+          MOVE <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- N -->
+    <div class="command-section">
+      <h2>N</h2>
+      <ul>
+        <li data-tooltip="Network commands" data-example="NET USE">
+          NET <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays network statistics" data-example="NETSTAT -a">
+          NETSTAT <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- P -->
+    <div class="command-section">
+      <h2>P</h2>
+      <ul>
+        <li data-tooltip="Displays or sets path variables" data-example="PATH C:\\Windows">
+          PATH <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Pauses execution in batch files" data-example="PAUSE">
+          PAUSE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Sends ICMP echo requests to check network" data-example="PING 8.8.8.8">
+          PING <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Prints a file" data-example="PRINT file.txt">
+          PRINT <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Changes the command prompt" data-example="PROMPT $P$G">
+          PROMPT <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- R -->
+    <div class="command-section">
+      <h2>R</h2>
+      <ul>
+        <li data-tooltip="Removes directories" data-example="RD C:\\Temp">
+          RD <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Renames files or directories" data-example="REN old.txt new.txt">
+          REN <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Replaces files" data-example="REPLACE source dest">
+          REPLACE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Advanced file copy utility" data-example="ROBOCOPY C:\\Data D:\\Backup /E">
+          ROBOCOPY <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- S -->
+    <div class="command-section">
+      <h2>S</h2>
+      <ul>
+        <li data-tooltip="Sets environment variables" data-example="SET PATH=C:\\Windows">
+          SET <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Shuts down or restarts the computer" data-example="SHUTDOWN /S">
+          SHUTDOWN <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Starts a program or command" data-example="START notepad.exe">
+          START <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Associates a path with a drive letter" data-example="SUBST X: C:\\Folder">
+          SUBST <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- T -->
+    <div class="command-section">
+      <h2>T</h2>
+      <ul>
+        <li data-tooltip="Displays or sets the system time" data-example="TIME 12:34">
+          TIME <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Sets the window title" data-example="TITLE My Console">
+          TITLE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays contents of a text file" data-example="TYPE file.txt">
+          TYPE <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- U -->
+    <div class="command-section">
+      <h2>U</h2>
+      <ul>
+        <li data-tooltip="Unsets environment variables (less common)" data-example="UNSET PATH">
+          UNSET <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- V -->
+    <div class="command-section">
+      <h2>V</h2>
+      <ul>
+        <li data-tooltip="Displays Windows or MS-DOS version" data-example="VER">
+          VER <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Enables/disables file write verification" data-example="VERIFY ON">
+          VERIFY <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays the volume label and serial number" data-example="VOL C:">
+          VOL <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- W -->
+    <div class="command-section">
+      <h2>W</h2>
+      <ul>
+        <li data-tooltip="Locates and displays full path of files" data-example="WHERE python.exe">
+          WHERE <span class="copy">[copy]</span>
+        </li>
+        <li data-tooltip="Displays the current user name and security context" data-example="WHOAMI">
+          WHOAMI <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- X -->
+    <div class="command-section">
+      <h2>X</h2>
+      <ul>
+        <li data-tooltip="Copies files and directories with options" data-example="XCOPY C:\\Data D:\\Backup /E /H">
+          XCOPY <span class="copy">[copy]</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  </div>
+</section>
+<section id="other" class="page"> <h2>Other Uses for MS-DOS Commands</h2> <p></p> <p> This section covers advanced and utility-focused uses of MS-DOS commands: installation, upgrading, updating, disk checking, debugging, repairing, and maintaining your system. </p> <p></p> <h3>Installation & Upgrading Commands</h3> <ul> <li><strong>SYS</strong> – Install MS-DOS system files to a disk.</li> <li><strong>FORMAT</strong> – Prepare (and wipe) disks for installation.</li> <li><strong>DISKCOPY</strong> – Clone full disks for installation sets.</li> <li><strong>XCOPY</strong> – Transfer large directories when upgrading systems.</li> </ul> <p></p> <h3>Updating Tools</h3> <ul> <li><strong>REPLACE</strong> – Update files only if the source is newer.</li> <li><strong>COPY /V</strong> – Verify file integrity while copying updates.</li> <li><strong>ATTRIB</strong> – Remove protection for updating locked files.</li> </ul> <p></p> <h3>Disk Checking & Repair</h3> <ul> <li><strong>CHKDSK</strong> – Scan disks for errors and display status.</li> <li><strong>SCANDISK</strong> (later versions) – Fix corrupted clusters.</li> <li><strong>FDISK</strong> – Inspect and rebuild partitions.</li> <li><strong>DEFRAG</strong> – Improve file layout and system performance.</li> </ul> <p></p> <h3>Debugging & Diagnostics</h3> <ul> <li><strong>DEBUG</strong> – Low-level memory reading and editing.</li> <li><strong>MEM</strong> – View detailed memory usage.</li> <li><strong>VER</strong> – Check your MS-DOS version.</li> <li><strong>MODE</strong> – Test devices and set system configurations.</li> </ul> <p></p> <h3>Maintenance & Cleanup</h3> <ul> <li><strong>DEL /F</strong> – Force delete corrupted or locked files.</li> <li><strong>TREE</strong> – Analyze folder structures.</li> <li><strong>DISKCOMP</strong> – Compare two disks for data integrity.</li> <li><strong>BACKUP / RESTORE</strong> – Save your system and recover it.</li> </ul> <p></p> <p>These commands extend MS-DOS beyond simple file navigation and let you maintain, repair, and tune the system like a technician.</p> </section>
+
   <section id="sim" class="page">
-    <h2>MS-DOS Simulator</h2>
-    <p>Interactive DOS command simulation.</p>
   </section>
 
   <section id="tips" class="page">
@@ -547,100 +912,146 @@ main {
   </section>
 
   <section id="trouble" class="page">
-    <h2>Troubleshooting Common MS-DOS Issues</h2>
-    <p>If you're encountering problems with MS-DOS, try the following solutions:</p>
-    <ul>
-      <li><strong>Issue:</strong> MS-DOS won't boot.
-        <br><strong>Solution:</strong> Ensure the boot disk or drive is inserted correctly. Check your BIOS settings to prioritize the boot device.</li>
+<h2>Troubleshooting Common MS-DOS Issues</h2>
+
+<p>
+MS-DOS systems are simple but unforgiving. When something goes wrong, the problem is usually related to boot files, disk configuration, or command paths.
+Below are common issues and proven fixes.
+</p>
+
+<ul>
+  <li>
+    <strong>System will not boot</strong><br>
+    <strong>Cause:</strong> Missing boot sector or incorrect boot device<br>
+    <strong>Fix:</strong> Ensure the correct boot disk or hard drive is selected in the BIOS.
+    Verify that the disk contains valid system files.
+  </li>
 <p></p>
-      <li><strong>Issue:</strong> Missing or corrupted system files.
-        <br><strong>Solution:</strong> Reinstall MS-DOS from the installation disk or image. Use the <code>sys</code> command to transfer system files to your drive.</li>
+  <li>
+    <strong>Missing or corrupted system files</strong><br>
+    <strong>Cause:</strong> Deleted or damaged DOS core files<br>
+    <strong>Fix:</strong> Reinstall MS-DOS or transfer system files using:
+    <code>SYS C:</code>
+  </li>
 <p></p>
-      <li><strong>Issue:</strong> Commands not recognized.
-        <br><strong>Solution:</strong> Verify the <code>PATH</code> environment variable is set correctly. Ensure the directory containing your commands (e.g., <code>C:\DOS</code>) is included.</li>
+
+  <li>
+    <strong>Command not recognized</strong><br>
+    <strong>Cause:</strong> Executable not found in the PATH<br>
+    <strong>Fix:</strong> Check the <code>PATH</code> variable and confirm that the command
+    directory (for example <code>C:\DOS</code>) is included.
+  </li>
 <p></p>
-      <li><strong>Issue:</strong> Hard drive not detected.
-        <br><strong>Solution:</strong> Check that the hard drive is properly connected and partitioned. Use the <code>fdisk</code> command to create partitions.</li>
+
+  <li>
+    <strong>Hard drive not detected</strong><br>
+    <strong>Cause:</strong> Drive not partitioned or not recognized by the BIOS<br>
+    <strong>Fix:</strong> Confirm physical connections, then use <code>FDISK</code> to create
+    and activate a partition.
+  </li>
 <p></p>
-      <li><strong>Issue:</strong> Compatibility issues with software.
-        <br><strong>Solution:</strong> Check the software's documentation for specific MS-DOS version requirements. Some programs may require specific configurations or memory adjustments.</li>
-    </ul>
+
+  <li>
+    <strong>Program fails to run or crashes</strong><br>
+    <strong>Cause:</strong> Memory conflicts or version incompatibility<br>
+    <strong>Fix:</strong> Review software documentation, adjust memory usage,
+    and configure <code>CONFIG.SYS</code> and <code>AUTOEXEC.BAT</code> if required.
+  </li>
 <p></p>
-    <p>For additional help, consult the official MS-DOS documentation or refer to online forums and communities.</p>
+</ul>
+
+<p>
+When troubleshooting MS-DOS, remember that every error usually has a direct cause.
+Careful inspection of system files, disk layout, and configuration settings will solve most problems.
+</p>
+
   </section>
 
   <section id="history" class="page">
-    <h2>The History of MS-DOS</h2>
-    <p>MS-DOS (Microsoft Disk Operating System) was a groundbreaking operating system developed for IBM-compatible personal computers. Here’s a detailed look at its history:</p>
+<h2>The History of MS-DOS</h2>
 
-    <h3>Origins and Development</h3>
-    <ul>
-      <li><strong>When:</strong> First released in August 1981.</li>
-      <li><strong>Who:</strong> Developed by Microsoft, led by Bill Gates and Paul Allen.</li>
-      <li><strong>How:</strong> Based on QDOS (Quick and Dirty Operating System), which Microsoft purchased and modified.</li>
-      <li><strong>Why:</strong> Built for IBM’s first personal computer.</li>
-    </ul>
+<p>
+MS-DOS (Microsoft Disk Operating System) was a foundational operating system that defined early personal computing.
+Designed for IBM-compatible PCs, it introduced millions of users to direct, text-based control of their machines.
+</p>
+
+<h3>Origins and Development</h3>
 <p></p>
-    <h3>Timeline of Commands and Features</h3>
-    <ul>
-      <li><strong>1981:</strong> Basic commands like <code>dir</code>, <code>copy</code>, <code>del</code>.</li>
-      <li><strong>1983:</strong> MS-DOS 2.0 added directories, <code>mkdir</code>, <code>cd</code>.</li>
-      <li><strong>1986:</strong> MS-DOS 3.2 added networking and <code>net</code>.</li>
-      <li><strong>1991:</strong> MS-DOS 5.0 added the <code>edit</code> text editor.</li>
-      <li><strong>1993:</strong> MS-DOS 6.22 added <code>scandisk</code> and disk compression tools.</li>
-    </ul>
+<ul>
+  <li><strong>Release:</strong> August 1981</li>
+  <li><strong>Developer:</strong> Microsoft</li>
+  <li><strong>Key Figures:</strong> Bill Gates and Paul Allen</li>
+  <li><strong>Base System:</strong> Derived from QDOS (Quick and Dirty Operating System)</li>
+  <li><strong>Purpose:</strong> Created to power IBM’s first Personal Computer</li>
+</ul>
+
+<p>
+Microsoft acquired QDOS, adapted it for IBM hardware, and evolved it into MS-DOS.
+This partnership helped establish Microsoft as a major force in the software industry.
+</p>
 <p></p>
-    <h3>Legacy and Importance</h3>
-    <p>MS-DOS became the foundation for early versions of Microsoft Windows and remained widely used throughout the 1980s and 1990s. Its simplicity and flexibility helped shape modern computing.</p>
+<h3>Evolution of Commands and Features</h3>
+<p></p>
+<ul>
+  <li><strong>1981 – MS-DOS 1.0:</strong> Core commands such as <code>DIR</code>, <code>COPY</code>, <code>DEL</code></li>
+  <li><strong>1983 – MS-DOS 2.0:</strong> Introduced directories, <code>CD</code>, <code>MKDIR</code>, and file paths</li>
+  <li><strong>1986 – MS-DOS 3.x:</strong> Improved disk support and early networking capabilities</li>
+  <li><strong>1991 – MS-DOS 5.0:</strong> Added the <code>EDIT</code> text editor and improved memory management</li>
+  <li><strong>1993 – MS-DOS 6.22:</strong> Included <code>SCANDISK</code>, disk compression, and maintenance tools</li>
+</ul>
+
+<p></p>
+<h3>Legacy and Influence</h3>
+<p></p>
+<p>
+MS-DOS became the technical foundation for early versions of Microsoft Windows,
+which initially ran on top of DOS rather than replacing it.
+For many years, Windows relied on DOS to boot, manage hardware, and execute programs.
+</p>
+
+<p></p>
+<p>
+Although graphical operating systems eventually replaced MS-DOS for everyday use,
+its command structure, scripting style, and system philosophy continue to influence modern computing.
+Today, MS-DOS remains an important part of computer history and a valuable learning tool for understanding how operating systems work at their core.
+</p>
+
   </section>
 
   <section id="about" class="page">
-    <h2>About MS-DOS</h2>
-    <p>MS-DOS, short for Microsoft Disk Operating System, is an operating system for x86-based personal computers.</p>
-    <p>Developed by Microsoft, it was first introduced in 1981 and became the standard operating system for IBM-compatible PCs.</p>
-    <p>MS-DOS is a command-line operating system that provides users with direct control over their computer by typing commands.</p>
-    <p>This allows for precise management of files, programs, and system settings, making it a powerful tool for advanced users.</p>
-    <p>While MS-DOS has been largely replaced by graphical user interfaces (GUIs) in modern operating systems, its simplicity and efficiency still make it a favorite among enthusiasts and professionals in certain fields.</p>
+<h2>About MS-DOS</h2>
+
+<p>
+MS-DOS, short for <strong>Microsoft Disk Operating System</strong>, is an operating system designed for x86-based personal computers.
+It forms the foundation of early PC computing and represents the era when users interacted directly with the machine.
+</p>
+
+<p>
+Developed by Microsoft and first released in 1981, MS-DOS quickly became the standard operating system for IBM-compatible PCs.
+For over a decade, it powered millions of computers and laid the groundwork for later versions of Microsoft Windows.
+</p>
+
+<p>
+Unlike modern operating systems, MS-DOS is entirely <strong>command-line driven</strong>.
+Instead of windows, icons, and menus, users control the system by typing commands directly into the console.
+This approach offers precise, low-level control over files, programs, memory, and hardware behavior.
+</p>
+
+<p>
+Because of its simplicity and minimal overhead, MS-DOS runs fast even on limited hardware.
+There are no background services, visual effects, or hidden processes—every action is intentional and visible to the user.
+This made it an ideal environment for learning how computers actually work.
+</p>
+
+<p>
+Although graphical operating systems have largely replaced MS-DOS in everyday use, its influence remains significant.
+Many modern tools, scripting systems, and recovery environments still rely on DOS-style commands.
+Today, MS-DOS continues to be valued by enthusiasts, technicians, and educators for its clarity, efficiency, and historical importance.
+</p>
   </section>
 
 </main>
-<footer>  <p>Ⓖ MS-DOS Guide Ⓖ</p>  <div id="clock">    🕒    <div id="clockTooltip"></div>  </div></footer><style>
-/* FOOTER */
-footer {
-  background: var(--panel);
-  color: white;
-  padding: 1em 2em;
-  position: fixed;
-  width: 100%;
-  bottom: 0;
-  font-family: "Segoe UI", Arial, sans-serif;
-  text-align: center;
-  font-size: 2px;
-}/* Clock icon */#clock {
-  position: fixed;
-  right: 1rem;
-  bottom: 0.7rem;
-  font-size: 20px;
-  cursor: default;
-  user-select: none;
-}/* Tooltip (hidden by default) */
-#clockTooltip {
-  position: absolute;
-  bottom: 160%;
-  right: 0;
-  background: #000;
-  color: #00ff00;
-  border: 1px solid #00ff00;
-  padding: 6px 10px;
-  font-family: monospace;
-  font-size: 14px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}/* Show on hover */
-#clock:hover #clockTooltip {
-  opacity: 1;} </style>
+<footer>  <p>Ⓖ MS-DOS Guide Ⓖ</p>  <div id="clock">    🕒    <div id="clockTooltip"></div>  </div></footer>
 <script>
 function updateClock() {
   const now = new Date();
@@ -663,10 +1074,6 @@ function updateClock() {
 
 updateClock();
 setInterval(updateClock, 1000);
-</script>
-
-
-<script>
 function showPage() {
   const page = location.hash.substring(1) || "home";
 
@@ -682,7 +1089,202 @@ function showPage() {
 
 window.addEventListener("hashchange", showPage);
 window.addEventListener("load", showPage);
-</script>
+document.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("copy")) return;
 
+  const li = e.target.closest("li");
+  const text = li.getAttribute("data-example");
+  if (!text) return;
+
+  navigator.clipboard.writeText(text).then(() => {
+    e.target.textContent = "✔";
+    e.target.classList.add("copied");
+    setTimeout(() => {
+      e.target.textContent = "[copy]";
+      e.target.classList.remove("copied");
+    }, 900);
+  }).catch(() => {
+    alert("Failed to copy!");
+  });
+});
+const bootLines = [
+  "Click to Skip ...",
+  "MS-DOS Guide BIOS v1.0",
+  "Copyright (C) 1981-2025",
+  "",
+  "Memory check ........ OK",
+  "Initializing system",
+  "",
+  "C:\\>"
+];
+
+const bootText = document.getElementById("bootText");
+const bootScreen = document.getElementById("bootScreen");
+
+let line = 0, char = 0;
+let running = true;
+let tunnelActive = false;
+const bits = [];
+
+function typeBoot() {
+  if (!running) return;
+
+  if (line >= bootLines.length) {
+    setTimeout(startTunnel, 300);
+    return;
+  }
+
+  if (char < bootLines[line].length) {
+    bootText.textContent += bootLines[line][char++];
+    setTimeout(typeBoot, 24);
+  } else {
+    bootText.textContent += "\n";
+    line++;
+    char = 0;
+    setTimeout(typeBoot, 120);
+  }
+}
+
+function startTunnel() {
+  if (tunnelActive) return;
+  tunnelActive = true;
+
+  // Stop blinking and hide cursor
+  const cursor = document.querySelector('.cursor');
+  if (cursor) {
+    cursor.style.animation = 'none';  // stops blinking
+    cursor.style.opacity = '0';        // hide cursor
+  }
+
+  bootText.style.transition = "transform 1s ease, opacity 1s ease";
+  bootText.style.transform = "translate(-50%, -50%) scale(1.4)";
+  bootText.style.opacity = "0";
+
+  for (let i = 0; i < 1340; i++) createBit();
+  animateTunnel();
+
+  setTimeout(endBoot, 2000);
+}
+
+function createBit() {
+  const bit = document.createElement("div");
+  bit.className = "bit";
+  bit.textContent = Math.random() > 0.5 ? "1" : "0";
+
+  const angle = Math.random() * Math.PI * 2;
+  const depth = Math.random() * 800 + 200;
+
+  bit.x = Math.cos(angle) * depth;
+  bit.y = Math.sin(angle) * depth;
+  bit.z = Math.random() * 1000;
+
+  bootScreen.appendChild(bit);
+  bits.push(bit);
+}
+
+function animateTunnel() {
+  if (!tunnelActive) return;
+
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+
+  bits.forEach(bit => {
+    bit.z -= 20;
+
+    const scale = 400 / bit.z;
+    const x = cx + bit.x * scale;
+    const y = cy + bit.y * scale;
+
+    bit.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    bit.style.opacity = Math.min(1, scale * 2);
+
+    if (bit.z < 50) {
+      bit.z = 600;
+    }
+  });
+
+  requestAnimationFrame(animateTunnel);
+}
+
+function endBoot() {
+  running = false;
+  tunnelActive = false;
+  bootScreen.classList.add("fade-out");
+  setTimeout(() => bootScreen.remove(), 800);
+}
+
+function skipBoot() {
+  endBoot();
+}
+
+window.addEventListener("click", skipBoot);
+window.addEventListener("keydown", skipBoot);
+
+typeBoot();
+const cursor = document.getElementById("cursor");
+
+/* MODE: "text" | "block" */
+let cursorMode = "block";
+
+function setCursorMode(mode) {
+  cursor.className = "";
+  if (mode === "text") cursor.classList.add("cursor-text");
+  if (mode === "block") cursor.classList.add("cursor-block");
+}
+
+setCursorMode(cursorMode);
+
+let isTunneling = false; // Set true during tunneling, false otherwise
+
+document.addEventListener("mousemove", e => {
+  if (isTunneling) {
+    // Fix cursor position during tunneling
+    cursor.style.left = "50vw";
+    cursor.style.top = "80vh";
+  } else {
+    // Normal follow mouse
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+  }
+
+  // Trail (always at real mouse)
+  const t = document.createElement("div");
+  t.className = "trail";
+  t.style.left = e.clientX + "px";
+  t.style.top = e.clientY + "px";
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 600);
+});
+
+
+/* Text fields = I-beam */
+document.addEventListener("mouseover", e => {
+  if (e.target.matches("input, textarea")) {
+    setCursorMode("text");
+  }
+  if (e.target.closest("a, button")) {
+    cursor.classList.add("cursor-hover");
+  }
+});
+
+document.addEventListener("mouseout", e => {
+  if (e.target.matches("input, textarea")) {
+    setCursorMode("block");
+  }
+  if (e.target.closest("a, button")) {
+    cursor.classList.remove("cursor-hover");
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Insert") {
+    cursorMode = cursorMode === "block" ? "text" : "block";
+    setCursorMode(cursorMode);
+  }
+});
+document.addEventListener("keydown", () => {
+  cursor.classList.add("cursor-typing");
+  setTimeout(() => cursor.classList.remove("cursor-typing"), 150);
+});
+</script>
 </body>
 </html>
