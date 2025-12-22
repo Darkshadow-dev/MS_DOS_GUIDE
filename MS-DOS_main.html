@@ -53,13 +53,14 @@ header {
   white-space: nowrap;
 }
 
-/* NAVBAR - 1 LINE ALWAYS VISIBLE */
 nav {
   margin-top: 10px;
   overflow-x: auto;
+  overflow-y: hidden;   /* 🔒 hard lock vertical scrolling */
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
 }
+
 
 nav::-webkit-scrollbar { display: none; }
 
@@ -67,6 +68,9 @@ nav ul {
   list-style: none;
   display: flex;
   gap: 20px;
+  align-items: center;  /* ✅ prevents vertical growth */
+  padding: 0;
+  margin: 0;
 }
 
 nav a {
@@ -76,6 +80,9 @@ nav a {
   border-radius: 4px;
   transition: 0.2s;
   white-space: nowrap;
+  line-height: 1;       /* ✅ critical for mobile */
+  display: inline-flex; /* ✅ height stability */
+  align-items: center;
 }
 
 nav a:hover {
@@ -428,25 +435,51 @@ body {
 @keyframes fadeOut {
   to { opacity: 0; }
 }
-/* FOOTER */
 footer {
   background: var(--panel);
   color: white;
   padding: 1em 2em;
-  position: fixed;
+  position: relative;     
   width: 100%;
-  bottom: 0;
+  bottom: 0;               
+  left: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  text-align: center;
-  font-size: 2px;
-}/* Clock icon */#clock {
-  position: fixed;
-  right: 1rem;
-  bottom: 0.7rem;
+  font-size: 14px;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Left side container */
+.footer-left {
+  display: flex;
+  gap: 1.5em;
+}
+
+/* Style links */
+.footer-link {
+  color: #00ff00; /* green color */
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Clock stays fixed at bottom right but inside footer */
+#clock {
   font-size: 20px;
   cursor: default;
   user-select: none;
-}/* Tooltip (hidden by default) */
+  position: relative; /* so tooltip can position relative to clock */
+}
+
+/* Tooltip remains same */
 #clockTooltip {
   position: absolute;
   bottom: 160%;
@@ -461,9 +494,12 @@ footer {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
-}/* Show on hover */
+}
+
 #clock:hover #clockTooltip {
-  opacity: 1;}
+  opacity: 1;
+}
+
 
 </style>
 </head>
@@ -899,19 +935,46 @@ footer {
     <p><b>Terminating Processes:</b> Use the <code>Ctrl+C</code> keyboard shortcut to terminate a running process or command.</p>
   </section>
 
-  <section id="setup" class="page">
-    <h2>How to Set Up MS-DOS</h2>
-    <p>Setting up MS-DOS is a straightforward process. Follow the steps below to get started:</p>
-    <ol>
-      <li>Obtain an MS-DOS installation disk or image file from a trusted source.</li>
-      <li>Insert the installation disk into your floppy drive or mount the image file in your virtual machine.</li>
-      <li>Power on your computer or virtual machine and boot from the installation disk.</li>
-      <li>Follow the on-screen instructions to partition your hard drive and format it as needed.</li>
-      <li>Install the MS-DOS operating system by copying the required files to your hard drive.</li>
-      <li>Remove the installation disk and reboot your computer to complete the setup.</li>
-    </ol>
-    <p>Once installed, you can start using MS-DOS by typing commands at the prompt. Refer to the "Commands" section for a comprehensive list of available commands.</p>
-  </section>
+<section id="setup" class="page">
+  <h2>Setting Up MS-DOS</h2>
+
+  <p>
+    Installing MS-DOS is simple and works on both real hardware and virtual
+    machines. Follow the steps below to prepare your system.
+  </p>
+
+  <ol>
+    <li>
+      Obtain an MS-DOS installation disk or disk image from a reliable source.
+    </li>
+    <li>
+      Insert the floppy disk into your drive, or mount the disk image in your
+      virtual machine.
+    </li>
+    <li>
+      Power on the system and boot directly from the MS-DOS disk.
+    </li>
+    <li>
+      Use the setup tools to partition and format the hard drive if required.
+    </li>
+    <li>
+      Install MS-DOS by copying the necessary system files to the drive.
+    </li>
+    <li>
+      Remove the installation disk and restart the system to finish setup.
+    </li>
+  </ol>
+
+  <p>
+    After installation, MS-DOS will start with a command prompt. From here,
+    you can begin entering commands and exploring the system.
+  </p>
+
+  <p>
+    See the <strong>Commands</strong> section for a complete A–Z reference and
+    practical usage examples.
+  </p>
+</section>
 
   <section id="trouble" class="page">
 <h2>Troubleshooting Common MS-DOS Issues</h2>
@@ -1053,7 +1116,18 @@ Today, MS-DOS continues to be valued by enthusiasts, technicians, and educators 
   </section>
 
 </main>
-<footer>  <p>Ⓖ MS-DOS Guide Ⓖ</p>  <div id="clock">    🕒    <div id="clockTooltip"></div>  </div></footer>
+<footer>
+  <div class="footer-left">
+    <a href="#" class="footer-link">Community</a>
+    <a href="contact.html" class="footer-link">Contact</a>
+  </div>
+  <p>Ⓖ MS-DOS Guide Ⓖ</p>
+  <div id="clock">
+    🕒
+    <div id="clockTooltip"></div>
+  </div>
+</footer>
+
 <script>
 function updateClock() {
   const now = new Date();
@@ -1162,10 +1236,10 @@ function startTunnel() {
   bootText.style.transform = "translate(-50%, -50%) scale(1.4)";
   bootText.style.opacity = "0";
 
-  for (let i = 0; i < 1340; i++) createBit();
+  for (let i = 0; i < 340; i++) createBit();
   animateTunnel();
 
-  setTimeout(endBoot, 2000);
+  setTimeout(endBoot, 1200);
 }
 
 function createBit() {

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Snake Game</title>
+<link rel="icon" type="image/png" href="Website-Guide.png" />
+<style>
+  body {
+    margin: 0; 
+    background: #111;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header, footer {
+    background: #222;
+    text-align: center;
+    padding: 12px 0;
+    font-weight: bold;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    user-select: none;
+    max-height: 3%;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-height: 90%;
+  justify-content: flex-start;
+  padding-top: 20px;
+  }
+.canvas-wrapper {
+  width: 400px;
+  height: 400px;
+  flex-shrink: 0;
+}
+
+#gameCanvas {
+  display: block;
+}
+  #scoreBoard {
+    margin-top: 10px;
+    font-size: 1.2rem;
+  }
+  #pauseBtn {
+    margin-top: 15px;
+    background: #0f0;
+    border: none;
+    padding: 8px 20px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #111;
+    user-select: none;
+  }
+  #pauseBtn:hover {
+    background: #1f7f1f;
+  }
+::-webkit-scrollbar { display: none; }
+#mobileControls {
+  margin-top: 12px;
+  display: none;
+  text-align: center;
+}
+
+#mobileControls button {
+  font-size: 20px;
+  padding: 12px 18px;
+  margin: 4px;
+  border-radius: 8px;
+  border: none;
+  background: #222;
+  color: #fff;
+}
+
+/* show controls only on touch / small screens */
+@media (max-width: 768px) {
+  #mobileControls {
+    display: block;
+  }
+}
+
+.back-button {
+  position: fixed;
+  top: 60px;
+  left: 20px;
+  background: #111;
+  color: #0f0;
+  padding: 6px 14px;
+  border: 2px solid #0f0;
+  font-family: monospace;
+  font-size: 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px #0f0;
+}
+
+.back-button:hover {
+  background: #0f0;
+  color: #111;
+}
+
+
+</style>
+</head>
+<body>
+
+<header>GUIDELINES SNAKE</header>
+<button class="back-button" onclick="history.back()">[ BACK ]</button>
+<main>
+<div class="canvas-wrapper">
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+</div>
+
+  <div id="scoreBoard">Score: 0 | High Score: 0</div>
+  <button id="pauseBtn">Pause</button>
+</main>
+<div id="mobileControls">
+  <button data-dir="up">▲</button>
+  <div>
+    <button data-dir="left">◀</button>
+    <button data-dir="down">▼</button>
+    <button data-dir="right">▶</button>
+  </div>
+  <button id="pauseBtnMobile">⏸ Pause</button>
+</div>
+
+<footer>© Guidelines Ⓖ</footer>
+
+
+<script>
+(() => {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const pauseBtnMobile = document.getElementById('pauseBtnMobile');
+  const scoreBoard = document.getElementById('scoreBoard');
+
+  const gridSize = 20;
+  const cellCount = canvas.width / gridSize;
+
+  let snake, direction, nextDirection, food;
+  let score = 0;
+  let highScore = parseInt(localStorage.getItem('guidelinesSnakeHighScore')) || 0;
+  let paused = false;
+  let gameOver = false;
+
+  /* ================= RESET ================= */
+
+  function resetGame() {
+    snake = [{ x: 10, y: 10 }];
+    direction = { x: 0, y: 0 };
+    nextDirection = { x: 1, y: 0 };
+    score = 0;
+    paused = false;
+    gameOver = false;
+    pauseBtn.textContent = 'Pause';
+    placeFood();
+    updateScore();
+  }
+
+  /* ================= INPUT ================= */
+
+  window.addEventListener('keydown', e => {
+    if (e.key === 'p' || e.key === 'P') {
+      togglePause();
+      return;
+    }
+
+    if (gameOver && e.key === 'Enter') {
+      resetGame();
+      return;
+    }
+
+    if (paused || gameOver) return;
+
+    let newDir = null;
+    switch (e.key) {
+      case 'ArrowUp':
+      case 'w':
+      case 'W': newDir = { x: 0, y: -1 }; break;
+      case 'ArrowDown':
+      case 's':
+      case 'S': newDir = { x: 0, y: 1 }; break;
+      case 'ArrowLeft':
+      case 'a':
+      case 'A': newDir = { x: -1, y: 0 }; break;
+      case 'ArrowRight':
+      case 'd':
+      case 'D': newDir = { x: 1, y: 0 }; break;
+    }
+
+    if (newDir) {
+      if (snake.length > 1 &&
+          newDir.x === -direction.x &&
+          newDir.y === -direction.y) return;
+      nextDirection = newDir;
+    }
+  });
+
+  document.querySelectorAll('#mobileControls button[data-dir]').forEach(btn => {
+    btn.onclick = () => {
+      if (paused || gameOver) return;
+      const d = btn.dataset.dir;
+      if (d === 'up' && direction.y === 0) nextDirection = { x: 0, y: -1 };
+      if (d === 'down' && direction.y === 0) nextDirection = { x: 0, y: 1 };
+      if (d === 'left' && direction.x === 0) nextDirection = { x: -1, y: 0 };
+      if (d === 'right' && direction.x === 0) nextDirection = { x: 1, y: 0 };
+    };
+  });
+
+  pauseBtn.onclick = togglePause;
+  pauseBtnMobile.onclick = togglePause;
+
+  function togglePause() {
+    if (gameOver) return;
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+  }
+
+  /* ================= GAME ================= */
+
+  function update() {
+    if (paused || gameOver) return;
+
+    direction = nextDirection;
+    const head = {
+      x: snake[0].x + direction.x,
+      y: snake[0].y + direction.y
+    };
+
+    if (
+      head.x < 0 || head.y < 0 ||
+      head.x >= cellCount || head.y >= cellCount ||
+      snake.some(s => s.x === head.x && s.y === head.y)
+    ) {
+      endGame();
+      return;
+    }
+
+    snake.unshift(head);
+
+    if (head.x === food.x && head.y === food.y) {
+      score++;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('guidelinesSnakeHighScore', highScore);
+      }
+      placeFood();
+    } else {
+      snake.pop();
+    }
+
+    updateScore();
+  }
+
+  function endGame() {
+    gameOver = true;
+    pauseBtn.textContent = 'Restart';
+    scoreBoard.textContent += ' | GAME OVER';
+  }
+
+  function updateScore() {
+    scoreBoard.textContent = `Score: ${score} | High Score: ${highScore}`;
+  }
+
+  function placeFood() {
+    do {
+      food = {
+        x: Math.floor(Math.random() * cellCount),
+        y: Math.floor(Math.random() * cellCount)
+      };
+    } while (snake.some(s => s.x === food.x && s.y === food.y));
+  }
+
+  /* ================= DRAW ================= */
+
+  function drawCell(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+  }
+
+  function drawPauseOverlay() {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#0f0';
+    ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('--- PAUSED ---', canvas.width / 2, canvas.height / 2 - 10);
+    ctx.font = '14px monospace';
+    ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 18);
+  }
+
+  function draw() {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawCell(food.x, food.y, '#0f0');
+    snake.forEach((s, i) => drawCell(s.x, s.y, i === 0 ? '#afa' : '#0c0'));
+
+    if (paused && !gameOver) drawPauseOverlay();
+  }
+
+  /* ================= LOOP ================= */
+
+  resetGame();
+  setInterval(() => {
+    update();
+    draw();
+  }, 320);
+})();
+</script>
+
+</body>
+</html>

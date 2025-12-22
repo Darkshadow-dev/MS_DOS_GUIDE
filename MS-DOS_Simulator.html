@@ -260,45 +260,98 @@ nav::-webkit-scrollbar {
 </div>
 
 <script>
-const STORAGE_KEY = "msdos_sim_v2";
+
+const STORAGE_KEY = "simulator.0.2";
+
+/* ================= FILESYSTEM ================= */
 
 const ORIGINAL = {
-  cwd: ["C:\\"],
+  cwd: ["C:"],
   ver: "MS-DOS Simulator v2.0 (Simulated)",
   memKB: 8192,
-  drives: { "A:": null, "B:": null, "C:": "C:\\" },
   root: {
-    type: "dir",
-    children: {
-      "AUTOEXEC.BAT": { type: "file", content: "@echo off\nrem Autoexec\n" },
-      "README.TXT": { type: "file", content: "Welcome to the MS-DOS simulator!\nType HELP for commands.\n" },
-      "DOCUMENTS": {
-        type: "dir",
-        children: {
-          "NOTES.TXT": { type: "file", content: "These are your notes.\n" }
-        }
-      },
-      "PROGRAMS": {
-        type: "dir",
-        children: {
-          "EDIT.EXE": { type: "file", content: "Fake editor" },
-          "SCAN.EXE": { type: "file", content: "Fake scanner" },
-          "SYSINFO.EXE": { type: "file", content: "System info program" },
-          "TEXTDOCUMENTS": {
-            type: "dir",
-            children: {
-              "TEXT1.TXT": { type: "file", content: "These are your notes.\n" },
-              "TEXT2.TXT": { type: "file", content: "These are your other notes.\n" },
-              "AFEFYS.TXT": { type: "file", content: "These are your weird notes.\n" }
+    "C:": {
+      type: "dir",
+      children: {
+
+        "PROGRAMS": {
+          type: "dir",
+          children: {
+            "EDIT.EXE": { type: "file", content: "DOS text editor\n" },
+            "SCAN.EXE": { type: "file", content: "Virus scanner utility\n" },
+            "SYSINFO.EXE": { type: "file", content: "System information tool\n" },
+            "FORMAT.EXE": { type: "file", content: "Disk formatting utility\n" },
+            "CHKDSK.EXE": { type: "file", content: "Check disk status\n" },
+            "BACKUP.EXE": { type: "file", content: "Backup program\n" },
+
+            "UTILS": {
+              type: "dir",
+              children: {
+                "ZIP.EXE": { type: "file", content: "Compression utility\n" },
+                "UNZIP.EXE": { type: "file", content: "Extract compressed files\n" },
+                "HEXVIEW.EXE": { type: "file", content: "Hexadecimal file viewer\n" }
+              }
+            },
+
+            "TEXTDOCUMENTS": {
+              type: "dir",
+              children: {
+                "README.TXT": { type: "file", content: "Welcome to MS-DOS Guide\n" },
+                "NOTES.TXT": { type: "file", content: "Personal notes\n" },
+                "COMMANDS.TXT": { type: "file", content: "DIR, CD, COPY, DEL...\n" },
+                "AFEFYS.TXT": { type: "file", content: "These are your weird notes.\n" }
+              }
             }
           }
+        },
+
+"GAMES": {
+  type: "dir",
+  children: {
+"SNAKE.EXE": {
+  type: "file",
+  content: "Classic snake game\n",
+  href: "snake.html"
+},
+"TETRIS.EXE": {
+  type: "file",
+  content: "Block stacking game\n",
+  href: "tetris.html"
+}
+  }
+},
+
+        "DRIVERS": {
+          type: "dir",
+          children: {
+            "MOUSE.DRV": { type: "file", content: "Mouse driver\n" },
+            "KEYBOARD.DRV": { type: "file", content: "Keyboard driver\n" },
+            "SOUND.DRV": { type: "file", content: "Sound Blaster driver\n" }
+          }
+        },
+
+        "CONFIG": {
+          type: "dir",
+          children: {
+            "CONFIG.SYS": {
+              type: "file",
+              content: "DEVICE=HIMEM.SYS\nDEVICE=EMM386.EXE\n"
+            },
+            "AUTOEXEC.BAT": {
+              type: "file",
+              content: "@ECHO OFF\nPATH C:\\PROGRAMS\nPROMPT $P$G\n"
+            }
+          }
+        },
+
+        "LOGS": {
+          type: "dir",
+          children: {
+            "BOOT.LOG": { type: "file", content: "System boot successful\n" },
+            "ERROR.LOG": { type: "file", content: "No errors detected\n" }
+          }
         }
-      },
-      "GAMES": {
-        type: "dir",
-        children: {
-          "DOOM.TXT": { type: "file", content: "Imagine a game here.\n" }
-        }
+
       }
     }
   }
@@ -316,166 +369,132 @@ function loadFS() {
   }
   try {
     return JSON.parse(raw);
-  } catch (e) {
+  } catch {
     saveFS(ORIGINAL);
     return JSON.parse(JSON.stringify(ORIGINAL));
   }
 }
-let FS = loadFS();
 
-/* UI refs */
+let FS = loadFS();
+let cwdPath = [...FS.cwd];
+
+/* ================= UI ================= */
+
 const terminal = document.getElementById("terminal");
 const input = document.getElementById("cmd");
 const enterBtn = document.getElementById("enterBtn");
 const promptEl = document.getElementById("prompt");
 const editorOverlay = document.getElementById("editorOverlay");
 const fileEditor = document.getElementById("fileEditor");
-const closeEditorBtn = document.getElementById("closeEditorBtn");
 
-let currentEditingFile = null; // {parent, name}
+let currentEditingFile = null;
 
-/* Helpers */
+/* ================= HELPERS ================= */
 
-function appendLine(text, cls) {
+function appendLine(text) {
   const div = document.createElement("div");
-  div.className = "line " + (cls || "");
+  div.className = "line";
   div.textContent = text;
   terminal.appendChild(div);
   terminal.scrollTop = terminal.scrollHeight;
 }
 
-function appendLines(arr) {
-  arr.forEach(appendLine);
+function appendLines(lines) {
+  lines.forEach(appendLine);
 }
 
 function updatePrompt() {
-  promptEl.textContent = FS.cwd.join("").replace(/\\$/, "\\") + ">";
+  promptEl.textContent = cwdPath.join("\\") + ">";
 }
 
-/* Normalize path: return array of segments like ["C:\\", "FOLDER\\", ...] uppercase */
-function normalizePath(inputPath) {
-  if (!inputPath) return null;
-  let s = inputPath.trim();
+updatePrompt();
 
-  if (/^[A-Za-z]:\\/.test(s)) {
-    // Absolute path
-    const drive = s.slice(0, 3).toUpperCase();
-    let rest = s.slice(3);
-    if (!rest) return [drive];
-    const parts = rest.split(/\\+/).filter(Boolean).map(p => p.toUpperCase());
-    const result = [drive];
-    for (const part of parts) {
-      if (part === "..") {
-        if (result.length > 1) result.pop();
-      } else if (part !== ".") {
-        result.push(part + "\\");
-      }
-    }
-    return result;
-  } else {
-    // Relative path
-    const parts = s.split(/\\+/).filter(Boolean).map(p => p.toUpperCase());
-    const result = [...FS.cwd];
-    for (const part of parts) {
-      if (part === "..") {
-        if (result.length > 1) result.pop();
-      } else if (part !== ".") {
-        result.push(part + "\\");
-      }
-    }
-    return result;
-  }
+/* ================= PATH ================= */
+
+function normalizePath(input) {
+  if (!input) return null;
+  input = input.trim();
+
+  let base = input.match(/^[A-Za-z]:\\/i)
+    ? [input.slice(0, 2).toUpperCase()]
+    : [...cwdPath];
+
+  const rest = input.replace(/^[A-Za-z]:\\/i, "");
+  rest.split("\\").forEach(p => {
+    p = p.toUpperCase();
+    if (p === ".." && base.length > 1) base.pop();
+    else if (p && p !== ".") base.push(p);
+  });
+
+  return base;
 }
 
-/* Get node from path array */
-function pathToNode(pathArr) {
-  if (!pathArr || pathArr.length === 0) return FS.root;
-  let node = FS.root;
-  for (let i = 1; i < pathArr.length; i++) {
-    const seg = pathArr[i].replace(/\\$/, "").toUpperCase();
-    if (!node.children || !node.children[seg]) return null;
-    node = node.children[seg];
+function pathToNode(path) {
+  if (!path || path.length === 0) return null;
+
+  let node = FS.root[path[0]];
+  if (!node) return null;
+
+  for (let i = 1; i < path.length; i++) {
+    if (!node.children) return null;
+
+    const next = node.children[path[i]];
+    if (!next) return null;
+
+    node = next;
   }
+
   return node;
 }
 
-/* Find parent directory and name */
-function findParent(pathArr) {
-  if (!pathArr || pathArr.length <= 1) return { parent: FS.root, name: "C:\\" };
-  let parent = FS.root;
-  for (let i = 1; i < pathArr.length - 1; i++) {
-    const seg = pathArr[i].replace(/\\$/, "").toUpperCase();
-    if (!parent.children || !parent.children[seg]) return { parent: null, name: seg };
-    parent = parent.children[seg];
+
+function findParent(path) {
+  if (path.length === 1) return { parent: FS.root, name: path[0] };
+  let parent = FS.root[path[0]];
+  for (let i = 1; i < path.length - 1; i++) {
+    parent = parent.children?.[path[i]];
+    if (!parent) return {};
   }
-  return { parent, name: pathArr[pathArr.length - 1].replace(/\\$/, "").toUpperCase() };
+  return { parent, name: path[path.length - 1] };
 }
 
-function listDir(node) {
-  if (!node || node.type !== "dir") return [];
-  return Object.keys(node.children || {}).sort((a, b) => a.localeCompare(b));
-}
+/* ================= EDITOR ================= */
 
-/* Open file in editor overlay */
-function openFileEditor(pathArr) {
-  const { parent, name } = findParent(pathArr);
+function openFileEditor(path) {
+  const { parent, name } = findParent(path);
   if (!parent || !parent.children[name] || parent.children[name].type !== "file") {
-    appendLine("File not found or not a file.");
+    appendLine("File not found.");
     return;
   }
   currentEditingFile = { parent, name };
   fileEditor.value = parent.children[name].content || "";
   editorOverlay.style.display = "flex";
   input.disabled = true;
-  input.style.opacity = 0.5;
-  enterBtn.disabled = true;
-  input.value = "";
-  appendLine(`-- Editing ${name} -- Type 'close' to exit editor.`);
-  fileEditor.focus();
 }
 
-/* Close file editor and save */
 function closeFileEditor() {
   if (!currentEditingFile) return;
   currentEditingFile.parent.children[currentEditingFile.name].content = fileEditor.value;
   saveFS(FS);
-  appendLine(`-- Saved ${currentEditingFile.name} and closed editor --`);
+  appendLine("-- File saved --");
   currentEditingFile = null;
   editorOverlay.style.display = "none";
   input.disabled = false;
-  input.style.opacity = 1;
-  enterBtn.disabled = false;
   input.focus();
 }
 
-/* Commands */
+/* ================= COMMANDS ================= */
+
 const COMMANDS = {
+
   help() {
     appendLines([
       "Supported commands:",
-      " BASIC: help, dir, cd, cls, type, copy, del, move, ren, mkdir, rmdir, attrib",
-      " SYSTEM: chkdsk, format, fdisk, defrag, mem, ver, sys, date, time, tree",
-      " PROGRAMS: edit, scan, sysinfo, games (fake)",
-      " OTHER: restart (reset simulator), open, close (file editor)",
-      "Use: command [arguments]   Example: type README.TXT"
+      " BASIC: help, dir, cd, cls, type, copy, del, move, ren, mkdir, rmdir",
+      " SYSTEM: mem, ver",
+      " PROGRAMS: edit",
+      " OTHER: open, close, restart"
     ]);
-  },
-
-  open(args) {
-    if (!args[0]) {
-      appendLine("Syntax: open filename.txt");
-      return;
-    }
-    const path = normalizePath(args[0]);
-    openFileEditor(path);
-  },
-
-  close() {
-    if (currentEditingFile) {
-      closeFileEditor();
-    } else {
-      appendLine("Not editing any file.");
-    }
   },
 
   cls() {
@@ -487,283 +506,187 @@ const COMMANDS = {
   },
 
   mem() {
-    appendLine(`Conventional Memory (simulated): ${FS.memKB}K available.`);
+    appendLine(`${FS.memKB}K conventional memory available.`);
   },
 
   dir(args) {
-    const path = args && args[0] ? normalizePath(args[0]) : FS.cwd;
+    const path = args[0] ? normalizePath(args[0]) : cwdPath;
     const node = pathToNode(path);
     if (!node || node.type !== "dir") {
-      appendLine("File not found or not a directory.");
+      appendLine("File not found.");
       return;
     }
-    appendLine(" Volume in drive C has no label.");
-    appendLine(" Directory of " + path.join("").replace(/\\$/, "\\"));
-    const list = listDir(node);
-    list.forEach(name => {
-      const item = node.children[name];
-      if (item.type === "dir") appendLine(`<DIR>    ${name}`);
-      else appendLine(`${(item.content || "").length} bytes    ${name}`);
-    });
+    appendLine(" Directory of " + path.join("\\"));
+    Object.keys(node.children).forEach(n =>
+      appendLine(node.children[n].type === "dir" ? "<DIR> " + n : "      " + n)
+    );
   },
 
-
 cd(args) {
+  if (!args[0]) return;
 
-  // --- Handle "cd.." and "cd .." ---
-  if (!args[0] || args[0].toLowerCase() === ".." || args[0].toLowerCase() === "cd.." || args[0].toLowerCase() === "cd ..") {
-    if (FS.cwd.length > 1) {
-      FS.cwd.pop(); // move up one directory
-      updatePrompt();
-      saveFS(FS);
-    } else {
-      appendLine("Already at root directory.");
-    }
+  const targetPath = normalizePath(args[0]);
+  const node = pathToNode(targetPath);
+
+  // 🚀 EXE launcher
+  if (node && node.type === "file" && node.href) {
+    appendLine("Launching " + targetPath[targetPath.length - 1] + "...");
+    setTimeout(() => {
+      window.location.href = node.href;
+    }, 500);
     return;
   }
 
-  // --- Normal CD path handling ---
-  const target = normalizePath(args[0]);
-  const node = pathToNode(target);
+  // Normal directory change
   if (!node || node.type !== "dir") {
     appendLine("The system cannot find the path specified.");
     return;
   }
 
-  FS.cwd = target;
+  cwdPath = targetPath;
+  FS.cwd = targetPath;
+  saveFS(FS);
   updatePrompt();
-  saveFS(FS);
 },
 
-
-  mkdir(args) {
-    if (!args[0]) {
-      appendLine("Syntax: mkdir foldername");
-      return;
-    }
-    const targ = normalizePath(args[0]);
-    const { parent, name } = findParent(targ);
-    if (!parent) {
-      appendLine("Cannot create folder here.");
-      return;
-    }
-    const nm = name.toUpperCase();
-    if (parent.children[nm]) {
-      appendLine("A subdirectory or file " + nm + " already exists.");
-      return;
-    }
-    parent.children[nm] = { type: "dir", children: {} };
-    appendLine("Directory created: " + nm);
-    saveFS(FS);
-  },
-
-rmdir(args) {
+mkdir(args) {
   if (!args[0]) {
-    appendLine("Syntax: rmdir foldername");
+    appendLine("Syntax: mkdir foldername");
     return;
   }
-  const targ = normalizePath(args[0]);
-  const { parent, name } = findParent(targ);
-  if (!parent || !parent.children[name]) {
-    appendLine("The system cannot find the path specified.");
+  const path = normalizePath(args[0]);
+  const { parent, name } = findParent(path);
+  if (!parent || parent.children[name]) {
+    appendLine("Cannot create directory.");
     return;
   }
-  const node = parent.children[name];
-  if (node.type !== "dir") {
-    appendLine("The specified path is not a directory.");
-    return;
-  }
-  if (Object.keys(node.children).length > 0) {
-    appendLine("The directory is not empty.");
-    return;
-  }
-  delete parent.children[name];
-  appendLine("Directory removed: " + name);
+  parent.children[name] = { type: "dir", children: {} };
   saveFS(FS);
+  appendLine("Directory created.");
 },
 
-  type(args) {
-    if (!args[0]) {
-      appendLine("Syntax: type filename");
-      return;
-    }
+
+  rmdir(args) {
     const path = normalizePath(args[0]);
     const { parent, name } = findParent(path);
-    if (!parent || !parent.children[name]) {
-      appendLine("File not found.");
+    if (!parent || !parent.children[name] || parent.children[name].type !== "dir") {
+      appendLine("Directory not found.");
       return;
     }
-    const node = parent.children[name];
-    if (node.type !== "file") {
-      appendLine("Cannot type directory.");
-      return;
-    }
-    appendLine(node.content);
-  },
-
-  copy(args) {
-    if (args.length < 2) {
-      appendLine("Syntax: copy source destination");
-      return;
-    }
-    const srcPath = normalizePath(args[0]);
-    const dstPath = normalizePath(args[1]);
-
-    const { parent: srcParent, name: srcName } = findParent(srcPath);
-    const { parent: dstParent, name: dstName } = findParent(dstPath);
-
-    if (!srcParent || !srcParent.children[srcName]) {
-      appendLine("Source file not found.");
-      return;
-    }
-    const srcNode = srcParent.children[srcName];
-    if (srcNode.type !== "file") {
-      appendLine("Source is not a file.");
-      return;
-    }
-    if (!dstParent) {
-      appendLine("Destination path invalid.");
-      return;
-    }
-
-    // Copy file content
-    dstParent.children[dstName] = {
-      type: "file",
-      content: srcNode.content,
-    };
-    appendLine("File copied.");
-    saveFS(FS);
-  },
-
-  del(args) {
-    if (!args[0]) {
-      appendLine("Syntax: del filename");
-      return;
-    }
-    const path = normalizePath(args[0]);
-    const { parent, name } = findParent(path);
-    if (!parent || !parent.children[name]) {
-      appendLine("File not found.");
-      return;
-    }
-    if (parent.children[name].type !== "file") {
-      appendLine("Cannot delete directory with del. Use rmdir.");
+    if (Object.keys(parent.children[name].children).length) {
+      appendLine("Directory not empty.");
       return;
     }
     delete parent.children[name];
-    appendLine("File deleted: " + name);
     saveFS(FS);
+    appendLine("Directory removed.");
+  },
+
+  type(args) {
+    const path = normalizePath(args[0]);
+    const { parent, name } = findParent(path);
+    const file = parent?.children[name];
+    if (!file || file.type !== "file") {
+      appendLine("File not found.");
+      return;
+    }
+    appendLine(file.content);
+  },
+
+  copy(args) {
+    const src = normalizePath(args[0]);
+    const dst = normalizePath(args[1]);
+    const s = findParent(src);
+    const d = findParent(dst);
+    if (!s.parent || !d.parent || !s.parent.children[s.name]) {
+      appendLine("Copy failed.");
+      return;
+    }
+    d.parent.children[d.name] = {
+      type: "file",
+      content: s.parent.children[s.name].content
+    };
+    saveFS(FS);
+    appendLine("File copied.");
+  },
+
+  del(args) {
+    const path = normalizePath(args[0]);
+    const { parent, name } = findParent(path);
+    if (!parent || !parent.children[name]) {
+      appendLine("File not found.");
+      return;
+    }
+    delete parent.children[name];
+    saveFS(FS);
+    appendLine("File deleted.");
   },
 
   move(args) {
-    if (args.length < 2) {
-      appendLine("Syntax: move source destination");
+    const src = normalizePath(args[0]);
+    const dst = normalizePath(args[1]);
+    const s = findParent(src);
+    const d = findParent(dst);
+    if (!s.parent || !d.parent) {
+      appendLine("Move failed.");
       return;
     }
-    const srcPath = normalizePath(args[0]);
-    const dstPath = normalizePath(args[1]);
-
-    const { parent: srcParent, name: srcName } = findParent(srcPath);
-    const { parent: dstParent, name: dstName } = findParent(dstPath);
-
-    if (!srcParent || !srcParent.children[srcName]) {
-      appendLine("Source not found.");
-      return;
-    }
-    if (!dstParent) {
-      appendLine("Destination path invalid.");
-      return;
-    }
-
-    dstParent.children[dstName] = srcParent.children[srcName];
-    delete srcParent.children[srcName];
-    appendLine("Moved " + srcName + " to " + dstName);
+    d.parent.children[d.name] = s.parent.children[s.name];
+    delete s.parent.children[s.name];
     saveFS(FS);
+    appendLine("File moved.");
   },
 
   ren(args) {
-    if (args.length < 2) {
-      appendLine("Syntax: ren oldname newname");
-      return;
-    }
     const path = normalizePath(args[0]);
-    const { parent, name: oldName } = findParent(path);
-    if (!parent || !parent.children[oldName]) {
-      appendLine("File or directory not found.");
-      return;
-    }
-    const newName = args[1].toUpperCase();
-    if (parent.children[newName]) {
-      appendLine("A file or directory with the new name already exists.");
-      return;
-    }
-    parent.children[newName] = parent.children[oldName];
-    delete parent.children[oldName];
-    appendLine(`Renamed ${oldName} to ${newName}`);
+    const { parent, name } = findParent(path);
+    const newName = args[1]?.toUpperCase();
+    if (!parent || !newName) return;
+    parent.children[newName] = parent.children[name];
+    delete parent.children[name];
     saveFS(FS);
+    appendLine("Renamed.");
   },
 
   edit(args) {
-    if (!args[0]) {
-      appendLine("Syntax: edit filename");
-      return;
-    }
-    const path = normalizePath(args[0]);
-    openFileEditor(path);
+    openFileEditor(normalizePath(args[0]));
+  },
+
+  open(args) {
+    openFileEditor(normalizePath(args[0]));
   },
 
   restart() {
     FS = JSON.parse(JSON.stringify(ORIGINAL));
+    cwdPath = [...FS.cwd];
     saveFS(FS);
-    appendLine("Simulator reset.");
-    updatePrompt();
-  },
-
-  cls() {
     terminal.innerHTML = "";
+    updatePrompt();
+    appendLine("Simulator reset.");
   }
 };
 
-/* Execute commands */
+/* ================= EXEC ================= */
+
 function runCommand(line) {
   if (!line.trim()) return;
-  appendLine(FS.cwd.join("").replace(/\\$/, "\\") + "> " + line);
+  appendLine(cwdPath.join("\\") + "> " + line);
   const [cmd, ...args] = line.trim().split(/\s+/);
-  const command = cmd.toLowerCase();
-
-  if (currentEditingFile && command !== "close") {
-    appendLine("You are currently editing a file. Type 'close' to exit editor.");
-    return;
-  }
-
-  if (COMMANDS[command]) {
-    COMMANDS[command](args);
-  } else {
-    appendLine(`'${cmd}' is not recognized as an internal or external command.`);
-  }
-  terminal.scrollTop = terminal.scrollHeight;
+  const fn = COMMANDS[cmd.toLowerCase()];
+  fn ? fn(args) : appendLine("Bad command or file name.");
 }
 
-/* Event listeners */
-enterBtn.addEventListener("click", () => {
+enterBtn.onclick = () => {
   runCommand(input.value);
   input.value = "";
-  input.focus();
-});
+};
 
-input.addEventListener("keydown", (e) => {
+input.onkeydown = e => {
   if (e.key === "Enter") {
-    e.preventDefault();
     runCommand(input.value);
     input.value = "";
-  } else if (e.key === "Escape" && currentEditingFile) {
-    closeFileEditor();
   }
-});
-
-closeEditorBtn.addEventListener("click", () => {
-  closeFileEditor();
-});
+};
 
 /* Initialize prompt and focus */
 updatePrompt();

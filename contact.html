@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Contact Us MS-DOS Community</title>
+<link rel="icon" type="image/png" href="Website-Guide.png" />
+<style>
+  /* General */
+  body {
+    margin: 0;
+    padding: 0;
+    background: #000000;
+    color: #00FF00;
+    font-family: 'Courier New', Courier, monospace;
+    user-select: none;
+  }
+
+  header, footer {
+    background: #003300;
+    padding: 10px 0;
+    text-align: center;
+    border-top: 2px solid #00FF00;
+    border-bottom: 2px solid #00FF00;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+
+  nav {
+    background: #002200;
+    padding: 8px 0;
+    text-align: center;
+    border-bottom: 2px solid #00FF00;
+  }
+
+  nav a {
+    color: #00FF00;
+    text-decoration: none;
+    padding: 0 15px;
+    font-weight: bold;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  nav a:hover, nav a.active {
+    border-color: #00FF00;
+  }
+
+  main {
+    max-width: 700px;
+    margin: 30px auto;
+    background: #001100;
+    padding: 20px;
+    border: 2px solid #00FF00;
+    box-shadow:
+      0 0 10px #00FF00,
+      inset 0 0 5px #00FF00;
+  }
+
+  h1 {
+    margin-top: 0;
+    font-weight: bold;
+    font-size: 1.8rem;
+    text-align: center;
+    text-shadow: 0 0 5px #00FF00;
+  }
+
+  p {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  form label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  textarea {
+    width: 100%;
+    background: black;
+    border: 2px solid #00FF00;
+    color: #00FF00;
+    font-family: monospace;
+    font-size: 1rem;
+    padding: 8px;
+    box-sizing: border-box;
+    margin-top: 6px;
+    resize: vertical;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  textarea:focus {
+    border-color: #33FF33;
+    box-shadow: 0 0 10px #33FF33;
+    background: #002200;
+  }
+
+  button {
+    margin-top: 20px;
+    width: 100%;
+    background: #004400;
+    color: #00FF00;
+    border: 2px solid #00FF00;
+    font-family: monospace;
+    font-size: 1.1rem;
+    padding: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  button:hover {
+    background: #00FF00;
+    color: #000;
+  }
+
+  /* Scrollbar hidden */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Footer */
+footer {
+  background: var(--panel);
+  color: white;
+  padding: 1em 2em;
+  position: relative;     
+  width: 100%;
+  bottom: 0;               
+  left: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+  #timeNow {
+    position: fixed;
+    right: 1rem;
+    bottom: 0.8rem;
+    color: #00FF00;
+    font-family: monospace;
+    font-weight: bold;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CONTACT US</h1>
+  <p>Have a question? Get in touch with our MS-DOS support team.</p>
+</header>
+
+<nav>
+  <a href="MS-DOS_main.html#home">HOME</a>
+  <a href="contact.html" class="active">CONTACT US</a>
+</nav>
+
+<main>
+  <form onsubmit="sendMail(this); return false;">
+    <label for="name">YOUR NAME:</label>
+    <input type="text" id="name" placeholder="Enter your name" required>
+
+    <label for="email">YOUR EMAIL:</label>
+    <input type="email" id="email" placeholder="Enter your email" required>
+
+    <label for="subject">SUBJECT:</label>
+    <input type="text" id="subject" placeholder="Enter subject" required>
+
+    <label for="message">MESSAGE:</label>
+    <textarea id="message" rows="5" placeholder="Write your message here"></textarea>
+
+    <button type="submit">SEND MESSAGE</button>
+  </form>
+</main>
+<div style="height: 2px;"></div>
+<footer>
+  <p>Ⓖ <span id="currentDate"></span> MS-DOS GUIDE. ALL RIGHTS RESERVED.</p>
+</footer>
+<div id="timeNow"></div>
+
+<script>
+  // Show current date in footer
+  const dateElem = document.getElementById('currentDate');
+  const nowDate = new Date();
+  const dateOptions = { year: 'numeric', day: 'numeric', month: 'long' };
+  dateElem.textContent = nowDate.toLocaleDateString(undefined, dateOptions);
+
+  // Show current time on the right, updating every second
+  const timeElem = document.getElementById('timeNow');
+  function updateTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    const s = now.getSeconds().toString().padStart(2, '0');
+    timeElem.textContent = `${h}:${m}:${s}`;
+  }
+  updateTime();
+  setInterval(updateTime, 1000);
+
+  function sendMail(form) {
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const subject = document.getElementById("subject").value;
+    const message = document.getElementById("message").value;
+
+    const mailtoLink = `mailto:guidecommunity.contacts@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      "Name: " + name + "\n" +
+      "Email: " + email + "\n\n" +
+      "Message:\n" + message
+    )}`;
+
+    window.location.href = mailtoLink;
+  }
+</script>
+
+</body>
+</html>

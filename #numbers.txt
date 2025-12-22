@@ -1,0 +1,13 @@
+
+
+
+--old--
+const STORAGE_KEY = "msdos_sim_4.8";    /* Fix by adding files ubdate the version by chenging the number the finnal one is "msdos_sim_v0.1" curent "msdos_sim_4.5 used msdos_sim_v2/msdos_sim_v3msdos_sim_4/msdos_sim_4.4/msdos_sim_v4.5/6/7/8" */
+part of the code
+
+
+-new--
+const STORAGE_KEY = "simulator.#number":
+used 
+0.1
+0.2
