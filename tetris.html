@@ -88,9 +88,72 @@
     animation: pulseGlow 1.4s infinite;
   }
 ::-webkit-scrollbar { display: none; }
+#orientationWarning {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #0f0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: monospace;
+  z-index: 9999;
+  text-align: center;
+}
+
+#orientationWarning h1 {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+#orientationWarning p {
+  font-size: 16px;
+}
+#mobileControls {
+  display: none;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.mc-row {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 10px 0;
+}
+
+#mobileControls button {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+  border-radius: 12px;
+  border: 2px solid #0f0;
+  background: #111;
+  color: #0f0;
+  font-family: monospace;
+}
+
+#mobileControls button:active {
+  background: #0f0;
+  color: #111;
+}
+
+/* show only on mobile */
+@media (max-width: 768px) {
+  #mobileControls {
+    display: block;
+  }
+}
+
+
 </style>
 </head>
 <body>
+<div id="orientationWarning">
+  <h1>⚠ ROTATE DEVICE</h1>
+  <p>This game works only in<br><b>VERTICAL (PORTRAIT)</b> mode</p>
+</div>
 
 <header>GUIDELINES TETRIS</header>
 <button class="back-button" onclick="history.back()">[ BACK ]</button>
@@ -101,6 +164,17 @@
   <div id="scoreBoard">Score: 0 | High Score: 0</div>
   <button id="pauseBtn">Pause</button>
 </main>
+<div id="mobileControls">
+  <div class="mc-row">
+    <button data-act="rotate">⟳</button>
+  </div>
+  <div class="mc-row">
+    <button data-act="left">◀</button>
+    <button data-act="down">▼</button>
+    <button data-act="right">▶</button>
+  </div>
+</div>
+
 <footer>© Guidelines Ⓖ</footer>
 
 <script>
@@ -323,14 +397,20 @@ const failPhrases = [
   "You may leave",
   "You shall not pass",
   "You're quite persistent",
-  "sorry litle one",
+  "sorry little one",
   "get out",
   "try again, mortal",
   "You dare FAIL!?",
   "You dare to FALL!?",
   "Better luck next time",
-  "not today, friend"
+  "not today, friend",
+  "good game",
+  "why try?",
+  "how pathetic",
+  "you are...",
+  "uhhhhhh..."
 ];
+
 
 let randomFailPhrase = '';
 
@@ -440,6 +520,24 @@ function drawEndOverlay(message) {
     if (paused && !gameOver) drawPauseOverlay();
     if (gameOver) drawEndOverlay(endMessage);
   }
+const warning = document.getElementById('orientationWarning');
+
+function checkOrientation() {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  if (isMobile && !isPortrait) {
+    warning.style.display = 'flex';
+    paused = true;
+  } else {
+    warning.style.display = 'none';
+    paused = false;
+  }
+}
+
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
 
   // Reset entire game
   function resetGame() {
@@ -454,33 +552,40 @@ function drawEndOverlay(message) {
   }
 
   // Controls
-  window.addEventListener('keydown', e => {
-    if (e.key === 'p' || e.key === 'P') {
-      togglePause();
-      return;
-    }
-    if (gameOver && e.key === 'Enter') {
-      resetGame();
-      return;
-    }
-    if (paused || gameOver) return;
+window.addEventListener('keydown', e => {
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    e.preventDefault(); // ⬅ stops page movement
+  }
 
-    switch(e.key) {
-      case 'ArrowLeft': move('left'); break;
-      case 'ArrowRight': move('right'); break;
-      case 'ArrowDown': move('down'); break;
-      case 'ArrowUp': 
-      case 'x':
-      case 'X': move('rotate'); break;
-      case 'z':
-      case 'Z': // rotate other way (optional)
-        rotation = (rotation + 3) % 4; // rotate counterclockwise
-        if (collide(board, getCurrentShape(), piecePos)) {
-          rotation = (rotation + 1) % 4; // revert if collide
-        }
-        break;
-    }
-  });
+  if (e.key === 'p' || e.key === 'P') {
+    togglePause();
+    return;
+  }
+
+  if (gameOver && e.key === 'Enter') {
+    resetGame();
+    return;
+  }
+
+  if (paused || gameOver) return;
+
+  switch(e.key) {
+    case 'ArrowLeft': move('left'); break;
+    case 'ArrowRight': move('right'); break;
+    case 'ArrowDown': move('down'); break;
+    case 'ArrowUp':
+    case 'x':
+    case 'X': move('rotate'); break;
+    case 'z':
+    case 'Z':
+      rotation = (rotation + 3) % 4;
+      if (collide(board, getCurrentShape(), piecePos)) {
+        rotation = (rotation + 1) % 4;
+      }
+      break;
+  }
+});
+
 
   pauseBtn.onclick = togglePause;
 
@@ -489,6 +594,17 @@ function drawEndOverlay(message) {
     paused = !paused;
     pauseBtn.textContent = paused ? 'Resume' : 'Pause';
   }
+document.querySelectorAll('#mobileControls button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (paused || gameOver) return;
+    const act = btn.dataset.act;
+    if (act === 'left') move('left');
+    if (act === 'right') move('right');
+    if (act === 'down') move('down');
+    if (act === 'rotate') move('rotate');
+  });
+});
+
 
   // Game loop interval for drop and draw
   let dropCounter = 0;
@@ -512,6 +628,7 @@ function drawEndOverlay(message) {
   resetGame();
   update();
 })();
+
 </script>
 
 </body>

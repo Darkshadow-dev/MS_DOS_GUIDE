@@ -63,19 +63,29 @@
   }
 ::-webkit-scrollbar { display: none; }
 #mobileControls {
-  margin-top: 12px;
+  margin-top: 24px;
   display: none;
   text-align: center;
 }
 
 #mobileControls button {
-  font-size: 20px;
-  padding: 12px 18px;
-  margin: 4px;
-  border-radius: 8px;
-  border: none;
-  background: #222;
-  color: #fff;
+  font-size: 22px;
+  padding: 18px 26px;
+  margin: 8px;
+  border-radius: 12px;
+  border: 2px solid #0f0;
+  background: #111;
+  color: #0f0;
+  min-width: 70px;
+}
+
+#mobileControls button:active {
+  background: #0f0;
+  color: #111;
+}
+
+#mobileControls > div {
+  margin-top: 12px;
 }
 
 /* show controls only on touch / small screens */
@@ -104,12 +114,37 @@
   background: #0f0;
   color: #111;
 }
+#orientationWarning {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #0f0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: monospace;
+  z-index: 9999;
+  text-align: center;
+}
+
+#orientationWarning h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+#orientationWarning p {
+  opacity: 0.8;
+}
 
 
 </style>
 </head>
 <body>
-
+<div id="orientationWarning">
+  <h2>📱 Portrait Mode Required</h2>
+  <p>Please rotate your phone vertically to play.</p>
+</div>
 <header>GUIDELINES SNAKE</header>
 <button class="back-button" onclick="history.back()">[ BACK ]</button>
 <main>
@@ -154,8 +189,8 @@
 
   function resetGame() {
     snake = [{ x: 10, y: 10 }];
-    direction = { x: 0, y: 0 };
-    nextDirection = { x: 1, y: 0 };
+direction = { x: 1, y: 0 };
+nextDirection = { x: 1, y: 0 };
     score = 0;
     paused = false;
     gameOver = false;
@@ -213,9 +248,21 @@
       if (d === 'right' && direction.x === 0) nextDirection = { x: 1, y: 0 };
     };
   });
+pauseBtn.onclick = () => {
+  if (gameOver) {
+    resetGame();
+    return;
+  }
+  togglePause();
+};
 
-  pauseBtn.onclick = togglePause;
-  pauseBtnMobile.onclick = togglePause;
+pauseBtnMobile.onclick = pauseBtn.onclick;
+
+window.addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+    e.preventDefault();
+  }
+});
 
   function togglePause() {
     if (gameOver) return;
@@ -315,6 +362,32 @@
     draw();
   }, 320);
 })();
+
+const warning = document.getElementById('orientationWarning');
+
+function checkOrientation() {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  if (isMobile && !isPortrait) {
+    warning.style.display = 'flex';
+    paused = true;
+  } else {
+    warning.style.display = 'none';
+    paused = false;
+  }
+}
+if (isMobile && !isPortrait) {
+  warning.style.display = 'flex';
+  paused = true;
+  return;
+}
+
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
+
+
 </script>
 
 </body>
