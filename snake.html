@@ -40,9 +40,18 @@
   flex-shrink: 0;
 }
 
-#gameCanvas {
-  display: block;
+@media (max-width: 480px) {
+  .canvas-wrapper {
+    width: 90vw;
+    height: 90vw;
+  }
+
+  #gameCanvas {
+    width: 100%;
+    height: 100%;
+  }
 }
+
   #scoreBoard {
     margin-top: 10px;
     font-size: 1.2rem;
@@ -185,6 +194,24 @@
   let paused = false;
   let gameOver = false;
 
+const warning = document.getElementById('orientationWarning');
+
+function checkOrientation() {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  if (isMobile && !isPortrait) {
+    warning.style.display = 'flex';
+    paused = true;
+  } else {
+    warning.style.display = 'none';
+    paused = false;
+  }
+}
+
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
   /* ================= RESET ================= */
 
   function resetGame() {
@@ -362,30 +389,6 @@ window.addEventListener('keydown', e => {
     draw();
   }, 320);
 })();
-
-const warning = document.getElementById('orientationWarning');
-
-function checkOrientation() {
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const isPortrait = window.innerHeight > window.innerWidth;
-
-  if (isMobile && !isPortrait) {
-    warning.style.display = 'flex';
-    paused = true;
-  } else {
-    warning.style.display = 'none';
-    paused = false;
-  }
-}
-if (isMobile && !isPortrait) {
-  warning.style.display = 'flex';
-  paused = true;
-  return;
-}
-
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', checkOrientation);
-checkOrientation();
 
 
 </script>
